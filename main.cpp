@@ -6,9 +6,9 @@
 using std::cout, std::cin, std::endl;
 
 //Defining Demensions
-const uint64_t WIDTH = 1920;
-const uint64_t HEIGHT = 1080;
-const uint64_t DEPTH = 1080;
+const uint64_t WIDTH = 852;
+const uint64_t HEIGHT = 480;
+const uint64_t DEPTH = 480;
 
 //For 2D
 const uint64_t FLATTENED = HEIGHT * WIDTH;
@@ -65,7 +65,7 @@ void drawFlat(int x, int y, color rgba) {
 
 //
 void drawRecPr(const int x, const int y, const int z, const int l, const int w, const int h, const int roll, const int pitch, const int yaw, const color rgba) {
-    std::array<point, 8> localPointList = {
+    std::array<point, 8> localPointList = {{
         {0, 0, 0},
         {0, y, 0},
         {0, 0, z},
@@ -74,23 +74,23 @@ void drawRecPr(const int x, const int y, const int z, const int l, const int w, 
         {x, y, 0},
         {x, 0, z},
         {x, y, z}
-    };
+    }};
 
-    matrix rMat = {
+    matrix rMat = {{
         {1.0, 0.0, 0.0},
         {0.0, cos(roll), -1.0 * sin(roll)},
         {0.0, sin(roll), cos(roll)}
-    };
+    }};
 
-    matrix pMat = {
+    matrix pMat = {{
         {cos(pitch), 0.0, sin(pitch)},
         {0.0, 1.0, 0.0},
         {-1.0 * sin(pitch), 0.0, cos(pitch)}
-    };
+    }};
 
-    matrix yMat = {
+    matrix yMat = {{
         {cos(yaw), -1.0 * sin(yaw), 0.0},
         {sin(yaw), cos(yaw), 0.0},
         {0.0, 0.0, 1.0}
-    };
+    }};
 }
