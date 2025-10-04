@@ -5,6 +5,9 @@
 #include <cmath>
 using std::cout, std::cin, std::endl;
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 //Defining Demensions
 const uint64_t WIDTH = 852;
 const uint64_t HEIGHT = 480;
@@ -23,7 +26,7 @@ struct color {
     uint8_t a;
 
     color operator*(const double bc) const {
-        return {r * bc, g * bc, b * bc, a};
+        return {static_cast<uint8_t>(r * bc), static_cast<uint8_t>(g * bc), static_cast<uint8_t>(b * bc), a};
     }
 };
 
@@ -93,9 +96,9 @@ void drawLine(const double x0, const double y0, const double z0, const double x1
     double vz = dz / np;
 
     //Get each point
-    std::array<point, np> points;
+    std::vector<point> points(np);
     for (int i = 0; i < np; i++) {
-        points[i] = {x0 + i*dx, y0 + i*dy, z0 + i*dz};
+        points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
     }
 
     for (point pnt : points) {
@@ -130,14 +133,14 @@ void drawLine(const double x0, const double y0, const double z0, const double x1
             cz0 = fz;
             cz1 = 1 - fz;
         }
-        drawAbsolute(ix, iy, iz, color * (cx0 * cy0 * cz0 / 3));
-        drawAbsolute(ix, iy + 1, iz, color * (cx0 * cy1 * cz0 / 3));
-        drawAbsolute(ix, iy, iz + 1, color * (cx0 * cy0 * cz1 / 3));
-        drawAbsolute(ix, iy + 1, iz + 1, color * (cx0 * cy1 * cz1 / 3));
-        drawAbsolute(ix + 1, iy, iz, color * (cx1 * cy0 * cz0 / 3));
-        drawAbsolute(ix + 1, iy + 1, iz, color * (cx1 * cy1 * cz0 / 3));
-        drawAbsolute(ix + 1, iy, iz + 1, color * (cx1 * cy0 * cz1 / 3));
-        drawAbsolute(ix + 1, iy + 1, iz + 1, color * (cx1 * cy1 * cz1 / 3));
+        drawAbsolute(ix, iy, iz, rgba * (cx0 * cy0 * cz0 / 3));
+        drawAbsolute(ix, iy + 1, iz, rgba * (cx0 * cy1 * cz0 / 3));
+        drawAbsolute(ix, iy, iz + 1, rgba * (cx0 * cy0 * cz1 / 3));
+        drawAbsolute(ix, iy + 1, iz + 1, rgba * (cx0 * cy1 * cz1 / 3));
+        drawAbsolute(ix + 1, iy, iz, rgba * (cx1 * cy0 * cz0 / 3));
+        drawAbsolute(ix + 1, iy + 1, iz, rgba * (cx1 * cy1 * cz0 / 3));
+        drawAbsolute(ix + 1, iy, iz + 1, rgba * (cx1 * cy0 * cz1 / 3));
+        drawAbsolute(ix + 1, iy + 1, iz + 1, rgba * (cx1 * cy1 * cz1 / 3));
     }
 }
 
