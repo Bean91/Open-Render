@@ -1,12 +1,12 @@
+#include <memory>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 #include <cstdint>
 #include <vector>
 #include <array>
 #include <iostream>
 #include <cmath>
 using std::cout, std::cin, std::endl;
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 //Defining Demensions
 const uint64_t WIDTH = 852;
@@ -28,7 +28,13 @@ struct color {
     color operator*(const double bc) const {
         return {static_cast<uint8_t>(r * bc), static_cast<uint8_t>(g * bc), static_cast<uint8_t>(b * bc), a};
     }
+
+    bool operator==(const color other) const {
+        return (r == other.r && g == other.g && b == other.b && a == other.a);
+    }
 };
+
+const color EMPTY_COLOR = {0, 0, 0, 0};
 
 //Point struct
 struct point {
@@ -49,9 +55,11 @@ point matMult(point pnt, matrix mat) {
 }
 
 //For 2D
-std::array<color, FLATTENED> flattenedPixels = {{{255, 255, 255, 255}}};
+std::array<color, FLATTENED> flattenedPixels = {{EMPTY_COLOR}};
+//For displaying data
+std::array<uint8_t, FLATTENED*4> flattenedBytes = {{0}};
 //For 3D
-std::array<color, ABSOLUTE> absolutePixels = {{{255, 255, 255, 255}}};
+std::array<color, ABSOLUTE> absolutePixels = {{EMPTY_COLOR}};
 
 //Smart indexing for 1D arrays.
 //For 2D
@@ -70,12 +78,12 @@ color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 //Draws individual pixel in 3D space
 void drawAbsolute(int x, int y, int z, color rgba) {
-    absolutePixels[absoluteIndex(x, y, z)] = rgba;
+    if (x > 0 && y > 0 && z > 0) absolutePixels[absoluteIndex(x, y, z)] = rgba;
 }
 
 //Draws individual pixel in 2D space
 void drawFlat(int x, int y, color rgba) {
-    flattenedPixels[flattenedIndex(x, y)] = rgba;
+    if (x > 0 && y > 0) flattenedPixels[flattenedIndex(x, y)] = rgba;
 }
 
 //Draws an anti-aliased line starting at (x0, y0, z0) to (x1, y1, z1)
@@ -195,7 +203,39 @@ void drawRecPr(const double x, const double y, const double z, const double l, c
     }
 }
 
+//Convert the 3D data to 2D
+void projAbsToFlat(double r, double p, double y) {
+    for (int i = 0; i < DEPTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            for (int k = 0; k < WIDTH; k++) {
+                if (flattenedPixels[flattenedIndex(k, j)] == EMPTY_COLOR) {
+                    flattenedPixels[flattenedIndex(k, j)] = absolutePixels[absoluteIndex(k, j, i)];
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+void* convToBytes() {
+    for (int i = 0; i < FLATTENED; i++) {
+        flattenedBytes[i*4] = flattenedPixels[i].r;
+        flattenedBytes[i*4+1] = flattenedPixels[i].g;
+        flattenedBytes[i*4+2] = flattenedPixels[i].b;
+        flattenedBytes[i*4+3] = flattenedPixels[i].a;
+    }
+    void* ptr = &flattenedBytes[0];
+    return ptr;
+}
+
 int main() {
     drawRecPr(10.0, 31.0, 5.0, 13.0, 64.0, 42.0, 24.0, 21.0, 63.0, {255, 255, 255, 255});
+    drawLine(0.0, 0.0, 0.0, 852.0, 480.0, 300.0, {122, 5, 64, 255});
+
+    projAbsToFlat(0.0, 0.0, 0.0);
+
+    char const *filename = "filename.png";
+    stbi_write_png(filename, WIDTH, HEIGHT, 4, convToBytes(), 0);
     return 0;
 }

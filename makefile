@@ -15,4 +15,9 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS) *.png
+
+push:
+	make clean
+	git commit -a -m "${M}"
+	git push
