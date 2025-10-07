@@ -1,4 +1,3 @@
-#include <memory>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <cstdint>
@@ -6,6 +5,7 @@
 #include <array>
 #include <iostream>
 #include <cmath>
+#include <memory>
 using std::cout, std::cin, std::endl;
 
 //Defining Demensions
@@ -26,7 +26,7 @@ struct color {
     uint8_t a;
 
     color operator*(const double bc) const {
-        return {static_cast<uint8_t>(r * bc), static_cast<uint8_t>(g * bc), static_cast<uint8_t>(b * bc), a};
+        return {r, g, b, static_cast<uint8_t>(a * bc)};
     }
 
     bool operator==(const color other) const {
@@ -78,30 +78,44 @@ color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 //Draws individual pixel in 3D space
 void drawAbsolute(int x, int y, int z, color rgba) {
-    if (x > 0 && y > 0 && z > 0) absolutePixels[absoluteIndex(x, y, z)] = rgba;
+    if ((x > 0 && y > 0 && z > 0) && (x < WIDTH && y < HEIGHT && z < DEPTH)) absolutePixels[absoluteIndex(x, y, z)] = rgba;
 }
 
 //Draws individual pixel in 2D space
 void drawFlat(int x, int y, color rgba) {
-    if (x > 0 && y > 0) flattenedPixels[flattenedIndex(x, y)] = rgba;
+    if ((x > 0 && y > 0) && (x < WIDTH && y < HEIGHT)) flattenedPixels[flattenedIndex(x, y)] = rgba;
 }
 
 //Draws an anti-aliased line starting at (x0, y0, z0) to (x1, y1, z1)
-void drawLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const color rgba) {
-    double dx = std::abs(x0 - x1);
-    double dy = std::abs(y0 - y1);
-    double dz = std::abs(z0 - z1);
+std::pair<std::vector<point>, std::array<int, 3>> drawLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const color rgba) {
+    double dx = std::abs(x1 - x0);
+    double dy = std::abs(y1 - y0);
+    double dz = std::abs(z1 - z0);
+
+    //Getting sign of vector
+    int xs = 1;
+    int ys = 1;
+    int zs = 1;
+    if ((x1 - x0) < 0) {
+        xs = -1;
+    }
+    if ((y1 - y0) < 0) {
+        ys = -1;
+    }
+    if ((z1 - z0) < 0) {
+        zs = -1;
+    }
 
     //Total numbers of points (largest distance value)
     int np;
     if (dx > dy && dx > dz) np = (int) dx;
-    else if (dy > dx && dy > dz) np = (int) dx;
+    else if (dy > dx && dy > dz) np = (int) dy;
     else np = (int) dz;
 
     //Distances between points
-    double vx = dx / np;
-    double vy = dy / np;
-    double vz = dz / np;
+    double vx = dx / np * xs;
+    double vy = dy / np * ys;
+    double vz = dz / np * zs;
 
     //Get each point
     std::vector<point> points(np);
@@ -115,41 +129,42 @@ void drawLine(const double x0, const double y0, const double z0, const double x1
         int iy = (int) pnt.y;
         int iz = (int) pnt.z;
         //Float parts of point
-        int fx = pnt.x - ix;
-        int fy = pnt.y - iy;
-        int fz = pnt.z - iz;
+        double fx = pnt.x - ix;
+        double fy = pnt.y - iy;
+        double fz = pnt.z - iz;
         //Brightness co-efficients
         double cx0, cx1, cy0, cy1, cz0, cz1;
         if (fx > 0.5) {
-            cx0 = 1 - fx;
-            cx1 = fx;
-        } else {
             cx0 = fx;
             cx1 = 1 - fx;
+        } else {
+            cx0 = 1 - fx;
+            cx1 = fx;
         }
         if (fy > 0.5) {
-            cy0 = 1 - fy;
-            cy1 = fy;
-        } else {
             cy0 = fy;
             cy1 = 1 - fy;
+        } else {
+            cy0 = 1 - fy;
+            cy1 = fy;
         }
         if (fz > 0.5) {
-            cz0 = 1 - fz;
-            cz1 = fz;
-        } else {
             cz0 = fz;
             cz1 = 1 - fz;
+        } else {
+            cz0 = 1 - fz;
+            cz1 = fz;
         }
-        drawAbsolute(ix, iy, iz, rgba * (cx0 * cy0 * cz0 / 3));
-        drawAbsolute(ix, iy + 1, iz, rgba * (cx0 * cy1 * cz0 / 3));
-        drawAbsolute(ix, iy, iz + 1, rgba * (cx0 * cy0 * cz1 / 3));
-        drawAbsolute(ix, iy + 1, iz + 1, rgba * (cx0 * cy1 * cz1 / 3));
-        drawAbsolute(ix + 1, iy, iz, rgba * (cx1 * cy0 * cz0 / 3));
-        drawAbsolute(ix + 1, iy + 1, iz, rgba * (cx1 * cy1 * cz0 / 3));
-        drawAbsolute(ix + 1, iy, iz + 1, rgba * (cx1 * cy0 * cz1 / 3));
-        drawAbsolute(ix + 1, iy + 1, iz + 1, rgba * (cx1 * cy1 * cz1 / 3));
+        drawAbsolute(ix, iy, iz, rgba * ((cx0 + cy0 + cz0) / 3.0));
+        drawAbsolute(ix, iy + 1 * ys, iz, rgba * ((cx0 + cy1 + cz0) / 3.0));
+        drawAbsolute(ix, iy, iz + 1, rgba * ((cx0 + cy0 + cz1) / 3.0));
+        drawAbsolute(ix, iy + 1 * ys, iz + 1 * zs, rgba * ((cx0 + cy1 + cz1) / 3.0));
+        drawAbsolute(ix + 1 * xs, iy, iz, rgba * ((cx1 + cy0 + cz0) / 3.0));
+        drawAbsolute(ix + 1 * xs, iy + 1 * ys, iz, rgba * ((cx1 + cy1 + cz0) / 3.0));
+        drawAbsolute(ix + 1 * xs, iy, iz + 1 * zs, rgba * ((cx1 + cy0 + cz1) / 3.0));
+        drawAbsolute(ix + 1 * xs, iy + 1 * ys, iz + 1 * zs, rgba * ((cx1 + cy1 + cz1) / 3.0));
     }
+    return {points, {xs, ys, zs}};
 }
 
 //Draws a rectangle centered at (x, y, z) with size l x w x h and angles (roll, pitch, yaw)
@@ -199,8 +214,23 @@ void drawRecPr(const double x, const double y, const double z, const double l, c
             pnt = matMult(pnt, mat);
         }
         vertexList[i] = pnt;
-        cout << vertexList[i].x << " " << vertexList[i].y << " " << vertexList[i].z << endl;
+        cout << pnt.x << " " << pnt.y << " " << pnt.z<< endl;
     }
+
+    std::array<std::pair<std::vector<point>, std::array<int, 3>>, 12> edgeDataList = {{
+        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba),
+        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba),
+        drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba),
+        drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba),
+        drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba),
+        drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba),
+        drawLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[5].y, vertexList[7].z, rgba),
+        drawLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba),
+        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z, rgba),
+        drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba),
+        drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba),
+        drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba)
+    }};
 }
 
 //Convert the 3D data to 2D
@@ -230,8 +260,8 @@ void* convToBytes() {
 }
 
 int main() {
-    drawRecPr(10.0, 31.0, 5.0, 13.0, 64.0, 42.0, 24.0, 21.0, 63.0, {255, 255, 255, 255});
-    drawLine(0.0, 0.0, 0.0, 852.0, 480.0, 300.0, {122, 5, 64, 255});
+    drawRecPr(400.0, 200.0, 0.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, {255, 255, 255, 255});
+//    drawLine(10.0, 352.0, 0.0, 500.0, 0.0, 0.0, {255, 255, 255, 255});
 
     projAbsToFlat(0.0, 0.0, 0.0);
 
