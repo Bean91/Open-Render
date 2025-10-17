@@ -2,7 +2,7 @@
 CXX = g++
 CXXFLAGS = -std=c++23 -Wall -O2
 
-TARGET = OpenRender
+TARGET = open_render
 OBJS = main.o
 
 all: $(TARGET)
