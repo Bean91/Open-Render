@@ -1,5 +1,5 @@
 //#define NO_PROP_A
-#include "open_render.hpp"
+#include "open_render_with_STL.hpp"
 
 int main() {
     drawRecPrFill(400.0, 200.0, 200.0, 300.0, 200.0, 200.0, {244, 67, 41, 255}, 70.0, 190.0, 10.0);
