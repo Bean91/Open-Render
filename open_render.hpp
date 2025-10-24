@@ -16,16 +16,11 @@ using std::cout, std::cin, std::endl;
 #ifndef HEIGHT
     #define HEIGHT 480
 #endif
-#ifndef DEPTH
-    #define DEPTH 480
-#endif
 
 #define PI std::numbers::pi
 
 //For 2D
 const uint64_t FLATTENED = HEIGHT * WIDTH;
-//For 3D
-const uint64_t ABSOLUTE = HEIGHT * WIDTH * DEPTH;
 
 //For converting degrees to radians
 const double convRate = PI / 180;
@@ -55,6 +50,9 @@ struct point {
     double z;
 };
 
+//Object data storing type
+typedef std::vector<std::pair<point, color>> object;
+
 //3 by 3 Matrix type definition
 typedef std::array<std::array<double, 3>, 3> matrix;
 
@@ -71,28 +69,18 @@ point matMult(point pnt, matrix mat) {
 std::array<color, FLATTENED> flattenedPixels = {{EMPTY_COLOR}};
 //For displaying data
 std::array<uint8_t, FLATTENED*4> flattenedBytes = {{0}};
-//For 3D
-std::array<color, ABSOLUTE> absolutePixels = {{EMPTY_COLOR}};
+
+std::vector<object> objectList;
 
 //Smart indexing for 1D arrays.
 //For 2D
 uint64_t flattenedIndex(int x, int y) {
     return y * WIDTH + x;
 }
-//For 3D
-uint64_t absoluteIndex(int x, int y, int z) {
-    return z * HEIGHT * WIDTH + y * WIDTH + x;
-}
 
 //Draws individual pixel in 3D space
 void drawAbsolute(int x, int y, int z, color rgba) {
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    if (z < 0) z = 0;
-    if (x > WIDTH) x = WIDTH;
-    if (y > HEIGHT) y = HEIGHT;
-    if (z > DEPTH) z = DEPTH;
-    absolutePixels[absoluteIndex(x, y, z)] = rgba;
+
 }
 
 //Draws individual pixel in 2D space
@@ -261,7 +249,7 @@ std::vector<point> drawNAALine(const double x0, const double y0, const double z0
 }
 
 //Draws a non-anti-aliased triangle with verteces (x0, y0, z0), (x1, y1, z1), (x2, y3, z4)
-void drawTriangle(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, const color rgba) {
+std::vector<point> drawTriangle(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, const color rgba) {
     std::array<std::vector<point>, 3> pointData;
     pointData[0] = drawNAALine(x0, y0, z0, x1, y1, z1, rgba);
     pointData[1] = drawNAALine(x1, y1, z1, x2, y2, z2, rgba);
@@ -270,39 +258,48 @@ void drawTriangle(const double x0, const double y0, const double z0, const doubl
     int l1 = pointData[1].size();
     int l2 = pointData[2].size();
 
+    std::vector<point> pointsList;
+
     if (l0 <= l1) {
         for (int i = 0; i < l0-1; i++) {
-            drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l1-1; i++) {
-            drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
 
     if (l1 <= l2) {
         for (int i = 0; i < l1-1; i++) {
-            drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l2-1; i++) {
-            drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
 
     if (l0 <= l2) {
         for (int i = 0; i < l0-1; i++) {
-            drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l2-1; i++) {
-            drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba);
+            pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
+    return pointsList;
 }
 
 //Draws a rectangle outline centered at (x, y, z) with size l x w x h and angles (roll, pitch, yaw)
-void drawRecPrOut(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+std::vector<point> drawRecPrOut(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
     std::array<point, 8> localPointList = {{
         {-l/2, -w/2, -h/2},
         {-l/2, w/2, -h/2},
@@ -353,22 +350,39 @@ void drawRecPrOut(const double x, const double y, const double z, const double l
         vertexList[i] = {round(pnt.x), round(pnt.y), round(pnt.z)};
     }
 
-    drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba);
-    drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba);
-    drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
-    drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
-    drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
-    drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
-    drawLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
-    drawLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
-    drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z, rgba);
-    drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
-    drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
-    drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+    std::vector<point> pointsList;
+    std::vector<point> temp;
+
+    temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+    temp = drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+    pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+
+    return pointsList;
 }
 
 //Draws a filled rectangle centered at (x, y, z) with size l x w x h and angles (roll, pitch, yaw)
-void drawRecPrFill(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+std::vector<point> drawRecPrFill(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
     std::array<point, 8> localPointList = {{
         {-l/2, -w/2, -h/2},
         {-l/2, w/2, -h/2},
@@ -379,6 +393,8 @@ void drawRecPrFill(const double x, const double y, const double z, const double 
         {l/2, -w/2, h/2},
         {l/2, w/2, h/2}
     }};
+    std::vector<point> pointsList;
+    std::vector<point> temp;
 
     //Converting to radians
     roll *= convRate;
@@ -420,38 +436,58 @@ void drawRecPrFill(const double x, const double y, const double z, const double 
     }
 
     std::array<std::vector<point>, 12> edgeDataList = {{
-        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba),
-        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba),
-        drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba),
-        drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba),
-        drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba),
-        drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba),
-        drawLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba),
-        drawLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba),
-        drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z, rgba),
-        drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba),
-        drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba),
-        drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba)
+        temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
+        temp = drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }};
 
     for (int i = 0; i < edgeDataList[0].size(); i++) {
-        drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, rgba);
+        temp = drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[0].size(); i++) {
-        drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, rgba);
+        temp = drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[3].size(); i++) {
-        drawNAALine(edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba);
+        temp = drawNAALine(edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[4].size(); i++) {
-        drawNAALine(edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba);
+        temp = drawNAALine(edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[8].size(); i++) {
-        drawNAALine(edgeDataList[8][i].x, edgeDataList[8][i].y, edgeDataList[8][i].z, edgeDataList[10][i].x, edgeDataList[10][i].y, edgeDataList[10][i].z, rgba);
+        temp = drawNAALine(edgeDataList[8][i].x, edgeDataList[8][i].y, edgeDataList[8][i].z, edgeDataList[10][i].x, edgeDataList[10][i].y, edgeDataList[10][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[9].size(); i++) {
-        drawNAALine(edgeDataList[9][i].x, edgeDataList[9][i].y, edgeDataList[9][i].z, edgeDataList[11][i].x, edgeDataList[11][i].y, edgeDataList[11][i].z, rgba);
+        temp = drawNAALine(edgeDataList[9][i].x, edgeDataList[9][i].y, edgeDataList[9][i].z, edgeDataList[11][i].x, edgeDataList[11][i].y, edgeDataList[11][i].z, rgba);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
+
+    return pointsList;
 }
 
 //Draws an anti-aliased circle centered at (x, y, z) with radius r and angles (roll, pitch, yaw)
@@ -615,27 +651,35 @@ std::vector<point> drawNAACircle(const double x, const double y, const double z,
 }
 
 //Draws an anti-aliased circle centered at (x, y, z) with radius r
-void drawSphere(const double x, const double y, const double z, const double r, const color rgba) {
+std::vector<point> drawSphere(const double x, const double y, const double z, const double r, const color rgba) {
     int tnp = 2*PI*r;
     double interval = 180/(r*PI);
     double theta = 0;
+    std::vector<point> pointsList;
+    std::vector<point> temp;
 
     for (int i = 0; i < tnp/2; i++){
         theta += interval;
-        drawCircle(x, y, z, r, rgba, theta);
+        temp = drawCircle(x, y, z, r, rgba, theta);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
+    return pointsList;
 }
 
 //Draws a non-anti-aliased circle centered at (x, y, z) with radius r
-void drawNAASphere(const double x, const double y, const double z, const double r, const color rgba) {
+std::vector<point> drawNAASphere(const double x, const double y, const double z, const double r, const color rgba) {
     int tnp = 2*PI*r;
     double interval = 180/(r*PI);
     double theta = 0;
+    std::vector<point> pointsList;
+    std::vector<point> temp;
 
     for (int i = 0; i < tnp/2; i++){
         theta += interval;
-        drawNAACircle(x, y, z, r, rgba, theta);
+        temp = drawNAACircle(x, y, z, r, rgba, theta);
+        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
+    return pointsList;
 }
 
 //Convert the 3D data to 2D
@@ -646,37 +690,16 @@ void drawNAASphere(const double x, const double y, const double z, const double 
         pitch *= convRate;
         yaw *= convRate;
 
-        for (int i = 0; i < DEPTH; i++) {
-            for (int j = 0; j < HEIGHT; j++) {
-                for (int k = 0; k < WIDTH; k++) {
-                    if (flattenedPixels[flattenedIndex(k, j)] == EMPTY_COLOR) {
-                        drawFlat(k, j, absolutePixels[absoluteIndex(k, j, i)] * (1 - (static_cast<double>(i)/DEPTH)));
-                    } else {
-                        continue;
-                    }
-                }
-            }
-        }
+
     }
 #else
     void projAbsToFlat(double roll, double pitch, double yaw) {
         //Converting to radians
-        const double convRate = PI / 180;
         roll *= convRate;
         pitch *= convRate;
         yaw *= convRate;
 
-        for (int i = 0; i < DEPTH; i++) {
-            for (int j = 0; j < HEIGHT; j++) {
-                for (int k = 0; k < WIDTH; k++) {
-                    if (flattenedPixels[flattenedIndex(k, j)] == EMPTY_COLOR) {
-                        drawFlat(k, j, absolutePixels[absoluteIndex(k, j, i)]);
-                    } else {
-                        continue;
-                    }
-                }
-            }
-        }
+
     }
 #endif
 
