@@ -19,5 +19,6 @@ clean:
 
 push:
 	make clean
+	git add *
 	git commit -a -m "${M}"
 	git push
