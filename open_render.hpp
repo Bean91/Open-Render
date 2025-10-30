@@ -7,6 +7,7 @@
 #include <cmath>
 #include <memory>
 #include <numbers>
+#include <map>
 using std::cout, std::cin, std::endl;
 
 //Defining Demensions
@@ -24,6 +25,8 @@ using std::cout, std::cin, std::endl;
 
 //For 2D
 const uint64_t FLATTENED = HEIGHT * WIDTH;
+//For 3D
+const uint64_t ABSOLUTE = HEIGHT * WIDTH * DEPTH;
 
 //For converting degrees to radians
 const double convRate = PI / 180;
@@ -82,8 +85,8 @@ point matMult(point pnt, matrix mat) {
 std::array<color, FLATTENED> flattenedPixels = {{EMPTY_COLOR}};
 //For displaying data
 std::array<uint8_t, FLATTENED*4> flattenedBytes = {{0}};
-//List of all objects
-std::vector<object*> objectList;
+//For 3D
+std::array<color, ABSOLUTE> absolutePixels = {{EMPTY_COLOR}};
 
 //Smart indexing for 1D arrays.
 //For 2D
@@ -91,18 +94,24 @@ uint64_t flattenedIndex(int x, int y) {
     return y * WIDTH + x;
 }
 
-//Draws individual pixel in 3D space
-void drawAbsolute(int x, int y, int z, color rgba) {
+//For 3D
+uint64_t absoluteIndex(int x, int y, int z) {
+    return z * HEIGHT * WIDTH + y * WIDTH + x;
+}
 
+//Draws individual pixel in 3D space
+void drawAbsolute(point pnt, color rgba) {
+    if ((pnt.x > 0) && (pnt.y > 0) && (pnt.z > 0) && (pnt.x < WIDTH) && (pnt.y < HEIGHT) && (pnt.z < DEPTH))
+        absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] = rgba;
 }
 
 //Draws individual pixel in 2D space
 void drawFlat(int x, int y, color rgba) {
-    if ((x < 0) && (y < 0) && (x > WIDTH) && (y > HEIGHT))
+    if ((x > 0) && (y > 0) && (x < WIDTH) && (y < HEIGHT))
         flattenedPixels[flattenedIndex(x, y)] = rgba;
 }
 
-//Draws an anti-aliased line starting at (x0, y0, z0) to (x1, y1, z1)
+//Draws a line starting at (x0, y0, z0) to (x1, y1, z1)
 object drawLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const color rgba) {
     double dx = std::abs(x1 - x0);
     double dy = std::abs(y1 - y0);
@@ -139,133 +148,16 @@ object drawLine(const double x0, const double y0, const double z0, const double 
         points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
     }
 
-    std::vector<point> pointsList;
-    for (point pnt : points) {
-        //Integer parts of point
-        int ix = (int) pnt.x;
-        int iy = (int) pnt.y;
-        int iz = (int) pnt.z;
-        //Float parts of point
-        double fx = pnt.x - ix;
-        double fy = pnt.y - iy;
-        double fz = pnt.z - iz;
-        //Brightness co-efficients
-        double cx0, cx1, cy0, cy1, cz0, cz1;
-        if (fx > 0.5) {
-            cx0 = fx;
-            cx1 = 1 - fx;
-        } else {
-            cx0 = 1 - fx;
-            cx1 = fx;
-        }
-        if (fy > 0.5) {
-            cy0 = fy;
-            cy1 = 1 - fy;
-        } else {
-            cy0 = 1 - fy;
-            cy1 = fy;
-        }
-        if (fz > 0.5) {
-            cz0 = fz;
-            cz1 = 1 - fz;
-        } else {
-            cz0 = 1 - fz;
-            cz1 = fz;
-        }
-        drawAbsolute(ix, iy, iz, rgba * ((cx0 + cy0 + cz0) / 3.0));
-        drawAbsolute(ix, iy + 1 * ys, iz, rgba * ((cx0 + cy1 + cz0) / 3.0));
-        drawAbsolute(ix, iy, iz + 1, rgba * ((cx0 + cy0 + cz1) / 3.0));
-        drawAbsolute(ix + 1 * xs, iy, iz, rgba * ((cx1 + cy0 + cz0) / 3.0));
-    }
-    object obj(pointsList, rgba, true);
-    return obj;
-}
-
-//Draws a non-anti-aliased line starting at (x0, y0, z0) to (x1, y1, z1)
-object drawNAALine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const color rgba) {
-    double dx = std::abs(x1 - x0);
-    double dy = std::abs(y1 - y0);
-    double dz = std::abs(z1 - z0);
-
-    //Getting sign of vector
-    int xs = 1;
-    int ys = 1;
-    int zs = 1;
-    if ((x1 - x0) < 0) {
-        xs = -1;
-    }
-    if ((y1 - y0) < 0) {
-        ys = -1;
-    }
-    if ((z1 - z0) < 0) {
-        zs = -1;
-    }
-
-    //Total numbers of points (largest distance value)
-    int np;
-    if (dx >= dy && dx >= dz) np = (int) dx;
-    else if (dy >= dx && dy >= dz) np = (int) dy;
-    else np = (int) dz;
-
-    //Distances between points
-    double vx = dx / np * xs;
-    double vy = dy / np * ys;
-    double vz = dz / np * zs;
-
-
-    //Get each point
-    std::vector<point> points(np);
-    for (int i = 0; i < np; i++) {
-        points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
-    }
-
-    for (point pnt : points) {
-        //Integer parts of point
-        int ix = (int) pnt.x;
-        int iy = (int) pnt.y;
-        int iz = (int) pnt.z;
-        //Float parts of point
-        double fx = pnt.x - ix;
-        double fy = pnt.y - iy;
-        double fz = pnt.z - iz;
-        //Brightness co-efficients
-        double cx0, cx1, cy0, cy1, cz0, cz1;
-        if (fx > 0.5) {
-            cx0 = fx;
-            cx1 = 1 - fx;
-        } else {
-            cx0 = 1 - fx;
-            cx1 = fx;
-        }
-        if (fy > 0.5) {
-            cy0 = fy;
-            cy1 = 1 - fy;
-        } else {
-            cy0 = 1 - fy;
-            cy1 = fy;
-        }
-        if (fz > 0.5) {
-            cz0 = fz;
-            cz1 = 1 - fz;
-        } else {
-            cz0 = 1 - fz;
-            cz1 = fz;
-        }
-        drawAbsolute(ix, iy, iz, rgba);
-        drawAbsolute(ix, iy + 1 * ys, iz, rgba);
-        drawAbsolute(ix, iy, iz + 1, rgba);
-        drawAbsolute(ix + 1 * xs, iy, iz, rgba);
-    }
     object obj(points, rgba, true);
     return obj;
 }
 
-//Draws a non-anti-aliased triangle with verteces (x0, y0, z0), (x1, y1, z1), (x2, y3, z4)
+//Draws a triangle with verteces (x0, y0, z0), (x1, y1, z1), (x2, y3, z4)
 object drawTriangle(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, const color rgba) {
     std::array<std::vector<point>, 3> pointData;
-    pointData[0] = drawNAALine(x0, y0, z0, x1, y1, z1, rgba).points;
-    pointData[1] = drawNAALine(x1, y1, z1, x2, y2, z2, rgba).points;
-    pointData[2] = drawNAALine(x0, y0, z0, x2, y2, z2, rgba).points;
+    pointData[0] = drawLine(x0, y0, z0, x1, y1, z1, rgba).points;
+    pointData[1] = drawLine(x1, y1, z1, x2, y2, z2, rgba).points;
+    pointData[2] = drawLine(x0, y0, z0, x2, y2, z2, rgba).points;
     int l0 = pointData[0].size();
     int l1 = pointData[1].size();
     int l2 = pointData[2].size();
@@ -274,36 +166,36 @@ object drawTriangle(const double x0, const double y0, const double z0, const dou
 
     if (l0 <= l1) {
         for (int i = 0; i < l0-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l1-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
 
     if (l1 <= l2) {
         for (int i = 0; i < l1-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l2-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
 
     if (l0 <= l2) {
         for (int i = 0; i < l0-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     } else {
         for (int i = 0; i < l2-1; i++) {
-            std::vector<point> temp = drawNAALine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+            std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
     }
@@ -464,34 +356,34 @@ object drawRecPrFill(const double x, const double y, const double z, const doubl
     }};
 
     for (int i = 0; i < edgeDataList[0].size(); i++) {
-        temp = drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, rgba).points;
+        temp = drawLine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[0].size(); i++) {
-        temp = drawNAALine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, rgba).points;
+        temp = drawLine(edgeDataList[0][i].x, edgeDataList[0][i].y, edgeDataList[0][i].z, edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[3].size(); i++) {
-        temp = drawNAALine(edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba).points;
+        temp = drawLine(edgeDataList[3][i].x, edgeDataList[3][i].y, edgeDataList[3][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[4].size(); i++) {
-        temp = drawNAALine(edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba).points;
+        temp = drawLine(edgeDataList[4][i].x, edgeDataList[4][i].y, edgeDataList[4][i].z, edgeDataList[7][i].x, edgeDataList[7][i].y, edgeDataList[7][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[8].size(); i++) {
-        temp = drawNAALine(edgeDataList[8][i].x, edgeDataList[8][i].y, edgeDataList[8][i].z, edgeDataList[10][i].x, edgeDataList[10][i].y, edgeDataList[10][i].z, rgba).points;
+        temp = drawLine(edgeDataList[8][i].x, edgeDataList[8][i].y, edgeDataList[8][i].z, edgeDataList[10][i].x, edgeDataList[10][i].y, edgeDataList[10][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     for (int i = 0; i < edgeDataList[9].size(); i++) {
-        temp = drawNAALine(edgeDataList[9][i].x, edgeDataList[9][i].y, edgeDataList[9][i].z, edgeDataList[11][i].x, edgeDataList[11][i].y, edgeDataList[11][i].z, rgba).points;
+        temp = drawLine(edgeDataList[9][i].x, edgeDataList[9][i].y, edgeDataList[9][i].z, edgeDataList[11][i].x, edgeDataList[11][i].y, edgeDataList[11][i].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     object obj(pointsList, rgba, true);
     return obj;
 }
 
-//Draws an anti-aliased circle centered at (x, y, z) with radius r and angles (roll, pitch, yaw)
+//Draws a circle centered at (x, y, z) with radius r and angles (roll, pitch, yaw)
 object drawCircle(const double x, const double y, const double z, const double r, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
     std::vector<point> points;
     std::vector<point> pointsList;
@@ -581,97 +473,7 @@ object drawCircle(const double x, const double y, const double z, const double r
     return obj;
 }
 
-//Draws a non-anti-aliased circle centered at (x, y, z) with radius r and angles (roll, pitch, yaw)
-object drawNAACircle(const double x, const double y, const double z, const double r, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-    std::vector<point> points;
-    std::vector<point> pointsList;
-    std::vector<point> temp;
-
-    int tnp = 2*PI*r;
-    int onp = tnp/8;
-    double interval = 1/r;
-    double theta = 0;
-
-    for (int i = 0; i < onp; i++){
-        theta += interval;
-        points.push_back({cos(theta)*r, sin(theta)*r, 0});
-    }
-
-    int len = points.size();
-
-    std::vector<point> fPoints;
-    for (int i = 0; i < len; i++) {
-        point pnt = points[i];
-        fPoints.push_back({pnt.x, pnt.y, 0});
-        fPoints.push_back({pnt.x, -pnt.y, 0});
-        fPoints.push_back({-pnt.x, pnt.y, 0});
-        fPoints.push_back({-pnt.x, -pnt.y, 0});
-        fPoints.push_back({pnt.y, pnt.x, 0});
-        fPoints.push_back({-pnt.y, pnt.x, 0});
-        fPoints.push_back({pnt.y, -pnt.x, 0});
-        fPoints.push_back({-pnt.y, -pnt.x, 0});
-    }
-
-    //Converts from degrees to radians
-    roll *= convRate;
-    pitch *= convRate;
-    yaw *= convRate;
-
-    //Matrix for roll
-    matrix rMat = {{
-        {1.0, 0.0, 0.0},
-        {0.0, cos(roll), -sin(roll)},
-        {0.0, sin(roll), cos(roll)}
-    }};
-    //Matrix for pitch
-    matrix pMat = {{
-        {cos(pitch), 0.0, sin(pitch)},
-        {0.0, 1.0, 0.0},
-        {-sin(pitch), 0.0, cos(pitch)}
-    }};
-    //Matrix for yaw
-    matrix yMat = {{
-        {cos(yaw), -sin(yaw), 0.0},
-        {sin(yaw), cos(yaw), 0.0},
-        {0.0, 0.0, 1.0}
-    }};
-    //Array of matrices
-    std::array<matrix, 3> matArr = {rMat, pMat, yMat};
-
-    for (int i = 0; i < fPoints.size(); i++) {
-        point pnt = fPoints[i];
-        for (matrix mat : matArr) {
-            pnt = matMult(pnt, mat);
-        }
-        pnt.x += x;
-        pnt.y += y;
-        pnt.z += z;
-        fPoints[i] = {round(pnt.x), round(pnt.y), round(pnt.z)};
-    }
-
-    for (int i = 0; i < (fPoints.size()/8)-1; i++) {
-        temp = drawNAALine(fPoints[(i*8)].x, fPoints[(i*8)].y, fPoints[(i*8)].z, fPoints[((i+1)*8)].x+1, fPoints[((i+1)*8)].y+1, fPoints[((i+1)*8)].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+1].x, fPoints[(i*8)+1].y, fPoints[(i*8)+1].z, fPoints[((i+1)*8)+1].x+1, fPoints[((i+1)*8)+1].y+1, fPoints[((i+1)*8)+1].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+2].x, fPoints[(i*8)+2].y, fPoints[(i*8)+2].z, fPoints[((i+1)*8)+2].x+1, fPoints[((i+1)*8)+2].y+1, fPoints[((i+1)*8)+2].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+3].x, fPoints[(i*8)+3].y, fPoints[(i*8)+3].z, fPoints[((i+1)*8)+3].x+1, fPoints[((i+1)*8)+3].y+1, fPoints[((i+1)*8)+3].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+4].x, fPoints[(i*8)+4].y, fPoints[(i*8)+4].z, fPoints[((i+1)*8)+4].x+1, fPoints[((i+1)*8)+4].y+1, fPoints[((i+1)*8)+4].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+5].x, fPoints[(i*8)+5].y, fPoints[(i*8)+5].z, fPoints[((i+1)*8)+5].x+1, fPoints[((i+1)*8)+5].y+1, fPoints[((i+1)*8)+5].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+6].x, fPoints[(i*8)+6].y, fPoints[(i*8)+6].z, fPoints[((i+1)*8)+6].x+1, fPoints[((i+1)*8)+6].y+1, fPoints[((i+1)*8)+6].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        temp = drawNAALine(fPoints[(i*8)+7].x, fPoints[(i*8)+7].y, fPoints[(i*8)+7].z, fPoints[((i+1)*8)+7].x+1, fPoints[((i+1)*8)+7].y+1, fPoints[((i+1)*8)+7].z+1, rgba).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-    }
-    object obj(pointsList, rgba, true);
-    return obj;
-}
-
-//Draws an anti-aliased circle centered at (x, y, z) with radius r
+//Draws a sphere centered at (x, y, z) with radius r
 object drawSphere(const double x, const double y, const double z, const double r, const color rgba) {
     int tnp = 2*PI*r;
     double interval = 180/(r*PI);
@@ -682,23 +484,6 @@ object drawSphere(const double x, const double y, const double z, const double r
     for (int i = 0; i < tnp/2; i++){
         theta += interval;
         temp = drawCircle(x, y, z, r, rgba, theta).points;
-        pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-    }
-    object obj(pointsList, rgba, true);
-    return obj;
-}
-
-//Draws a non-anti-aliased circle centered at (x, y, z) with radius r
-object drawNAASphere(const double x, const double y, const double z, const double r, const color rgba) {
-    int tnp = 2*PI*r;
-    double interval = 180/(r*PI);
-    double theta = 0;
-    std::vector<point> pointsList;
-    std::vector<point> temp;
-
-    for (int i = 0; i < tnp/2; i++){
-        theta += interval;
-        temp = drawNAACircle(x, y, z, r, rgba, theta).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
     }
     object obj(pointsList, rgba, true);
@@ -747,7 +532,7 @@ std::vector<point> drawBorderLine(const double x0, const double y0, const double
 }
 
 //Returns border values
-std::array<std::vector<point>, 12> viewBorder(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+std::array<point, 8> viewBorder(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
     std::array<point, 8> localPointList = {{
         {-WIDTH/2, -HEIGHT/2, -DEPTH/2},
         {-WIDTH/2, HEIGHT/2, -DEPTH/2},
@@ -797,40 +582,75 @@ std::array<std::vector<point>, 12> viewBorder(const double x, const double y, co
         pnt.z += z;
         vertexList[i] = {round(pnt.x), round(pnt.y), round(pnt.z)};
     }
+    return vertexList;
+}
 
-    std::array<std::vector<point>, 12> pointsList;
+//Gets the distance from a point to the line along the view frame
+point getDistance(const std::array<point, 8> viewFrame, const double x1, const double y1, const double z1) {
+    double x, y, z;
+    const double mx = (viewFrame[0].z - viewFrame[4].z)/(viewFrame[0].x - viewFrame[4].x);
+    const double my = (viewFrame[0].x - viewFrame[1].x)/(viewFrame[0].y - viewFrame[1].y);
+    const double mz = (viewFrame[0].y - viewFrame[2].y)/(viewFrame[0].z - viewFrame[2].z);
 
-    pointsList[0] = drawBorderLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z);
-    pointsList[1] = drawBorderLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z);
-    pointsList[2] = drawBorderLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z);
-    pointsList[3] = drawBorderLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[5].x, vertexList[5].y, vertexList[5].z);
-    pointsList[4] = drawBorderLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[3].x, vertexList[3].y, vertexList[3].z);
-    pointsList[5] = drawBorderLine(vertexList[2].x, vertexList[2].y, vertexList[2].z, vertexList[6].x, vertexList[6].y, vertexList[6].z);
-    pointsList[6] = drawBorderLine(vertexList[3].x, vertexList[3].y, vertexList[3].z, vertexList[7].x, vertexList[7].y, vertexList[7].z);
-    pointsList[7] = drawBorderLine(vertexList[6].x, vertexList[6].y, vertexList[6].z, vertexList[7].x, vertexList[7].y, vertexList[7].z);
-    pointsList[8] = drawBorderLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[2].x, vertexList[2].y, vertexList[2].z);
-    pointsList[9] = drawBorderLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[3].x, vertexList[3].y, vertexList[3].z);
-    pointsList[10] = drawBorderLine(vertexList[4].x, vertexList[4].y, vertexList[4].z, vertexList[6].x, vertexList[6].y, vertexList[6].z);
-    pointsList[11] = drawBorderLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z);
-    return pointsList;
+    x = -1*(my*x1-y1+viewFrame[0].y-my*viewFrame[0].x) / std::sqrt(my*my+1);
+    y = -1*(mz*y1-z1+viewFrame[0].z-mz*viewFrame[0].y) / std::sqrt(mz*mz+1);
+    z = -1*(mx*z1-x1+viewFrame[0].x-my*viewFrame[0].z) / std::sqrt(mx*mx+1);
+    cout << x << " " << y << " " << z << endl;
+    return {y, z, x};
 }
 
 //Convert the 3D data to 2D
-//#ifndef NO_PROP_A
-    void projAbsToFlat(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::array<std::vector<point>, 12> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
+#ifndef NO_PROP_A
+    void projToFlat(const double x, const double y, const double z, std::map<std::string, object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
+        for(const auto& [key, obj] : *objectList) {
+            if (obj.rendered) {
+                for (point pnt : obj.points) {
+                    drawAbsolute(getDistance(viewFrame, pnt.x, pnt.y, pnt.z), obj.rgba);
+                }
+            } else {
+                continue;
+            }
+        }
 
+        for (int i = 0; i < DEPTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                for (int k = 0; k < WIDTH; k++) {
+                    if (flattenedPixels[flattenedIndex(k, j)] == EMPTY_COLOR) {
+                        drawFlat(k, j, absolutePixels[absoluteIndex(k, j, i)] * (1 - (static_cast<double>(i)/DEPTH)));
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
     }
-//#else
-//    void projAbsToFlat(double roll, double pitch, double yaw) {
-//        //Converting to radians
-//        roll *= convRate;
-//        pitch *= convRate;
-//        yaw *= convRate;
-//
-//
-//    }
-//#endif
+#else
+    void projToFlat(const double x, const double y, const double z, std::map<std::string, object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
+        for(object obj : *objectList) {
+            if (obj.rendered) {
+                for (const auto& [key, obj] : obj.points) {
+                    drawAbsolute(getDistance(viewFrame, pnt.x, pnt.y, pnt.z), obj.rgba);
+                }
+            } else {
+                continue;
+            }
+        }
+
+        for (int i = 0; i < DEPTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                for (int k = 0; k < WIDTH; k++) {
+                    if (flattenedPixels[flattenedIndex(k, j)] == EMPTY_COLOR) {
+                        drawFlat(k, j, absolutePixels[absoluteIndex(k, j, i)]);
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+#endif
 
 void* convToBytes() {
     for (int i = 0; i < FLATTENED; i++) {
@@ -839,6 +659,5 @@ void* convToBytes() {
         flattenedBytes[i*4+2] = flattenedPixels[i].b;
         flattenedBytes[i*4+3] = flattenedPixels[i].a;
     }
-    void* ptr = &flattenedBytes[0];
-    return ptr;
+    return &flattenedBytes[0];
 }
