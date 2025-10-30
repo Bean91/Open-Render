@@ -9,7 +9,7 @@ int main() {
     objectList.insert({"sphere", drawSphere(500, 200, 200, 100, {255, 255, 255, 255})});
     objectList.insert({"triangle", drawTriangle(600, 200, 0, 250, 350, 200, 234, 100, 150, {50, 0, 255, 255})});
 
-    projToFlat(0.0, 0.0, 0.0, &objectList);
+    projToFlat(200.0, 0.0, 0.0, &objectList);
 
     char const *filename = "filename.png";
     stbi_write_png(filename, WIDTH, HEIGHT, 4, convToBytes(), 0);
