@@ -592,9 +592,9 @@ point getDistance(const std::array<point, 8> viewFrame, const double x1, const d
     const double my = (viewFrame[0].x - viewFrame[1].x)/(viewFrame[0].y - viewFrame[1].y);
     const double mz = (viewFrame[0].y - viewFrame[2].y)/(viewFrame[0].z - viewFrame[2].z);
 
-    y = (my*x1-y1+viewFrame[0].y-my*viewFrame[0].x) / std::sqrt(my*my+1);
-    z = (mz*y1-z1+viewFrame[0].z-mz*viewFrame[0].y) / std::sqrt(mz*mz+1);
-    x = (mx*z1-x1+viewFrame[0].x-mx*viewFrame[0].z) / std::sqrt(mx*mx+1);
+    y = -(my*x1-y1+viewFrame[0].y-my*viewFrame[0].x) / std::sqrt(my*my+1);
+    z = -(mz*y1-z1+viewFrame[0].z-mz*viewFrame[0].y) / std::sqrt(mz*mz+1);
+    x = -(mx*z1-x1+viewFrame[0].x-mx*viewFrame[0].z) / std::sqrt(mx*mx+1);
     return {x, y, z};
 }
 
