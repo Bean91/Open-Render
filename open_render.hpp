@@ -1,5 +1,3 @@
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 #include <cstdint>
 #include <vector>
 #include <array>
@@ -8,7 +6,6 @@
 #include <memory>
 #include <numbers>
 #include <map>
-using std::cout, std::cin, std::endl;
 
 //Defining Demensions
 #ifndef WIDTH
@@ -101,8 +98,20 @@ uint64_t absoluteIndex(int x, int y, int z) {
 
 //Draws individual pixel in 3D space
 void drawAbsolute(point pnt, color rgba) {
-    if ((pnt.x > 0) && (pnt.y > 0) && (pnt.z > 0) && (pnt.x < WIDTH) && (pnt.y < HEIGHT) && (pnt.z < DEPTH))
-        absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] = rgba;
+    if ((pnt.x > 0) && (pnt.y > 0) && (pnt.z > 0) && (pnt.x < WIDTH) && (pnt.y < HEIGHT) && (pnt.z < DEPTH)) {
+        if (absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] == EMPTY_COLOR) {
+            absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] = rgba;
+        } else {
+            color temp = absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)];
+
+            uint8_t a = 255-((255-temp.a)*(255-rgba.a)/255);
+            uint8_t r = (temp.r*(255-rgba.a)+rgba.r*rgba.a)/255;
+            uint8_t g = (temp.g*(255-rgba.a)+rgba.g*rgba.a)/255;
+            uint8_t b = (temp.b*(255-rgba.a)+rgba.b*rgba.a)/255;
+
+            absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] = {r, g, b, a};
+        }
+    }
 }
 
 //Draws individual pixel in 2D space
@@ -605,7 +614,94 @@ point getDistance(const std::array<point, 8> viewFrame, const double x1, const d
         for(const auto& [key, obj] : *objectList) {
             if (obj.rendered) {
                 for (point pnt : obj.points) {
-                    drawAbsolute(getDistance(viewFrame, pnt.x, pnt.y, pnt.z), obj.rgba);
+                    point p = getDistance(viewFrame, pnt.x, pnt.y, pnt.z);
+                    double ix = (int) p.x;
+                    double iy = (int) p.y;
+                    double iz = (int) p.z;
+                    //Float parts of point
+                    double fx = p.x - ix;
+                    double fy = p.y - iy;
+                    double fz = p.z - iz;
+                    //Brightness co-efficients
+                    double cx0, cx1, cy0, cy1, cz0, cz1;
+                    if (fx > 0.5) {
+                        cx0 = fx;
+                        cx1 = 1 - fx;
+                    } else {
+                        cx0 = 1 - fx;
+                        cx1 = fx;
+                    }
+                    if (fy > 0.5) {
+                        cy0 = fy;
+                        cy1 = 1 - fy;
+                    } else {
+                        cy0 = 1 - fy;
+                        cy1 = fy;
+                    }
+                    if (fz > 0.5) {
+                        cz0 = fz;
+                        cz1 = 1 - fz;
+                    } else {
+                        cz0 = 1 - fz;
+                        cz1 = fz;
+                    }
+                    #ifndef AA
+                        drawAbsolute({ix-1, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz}, obj.rgba);
+                        drawAbsolute({ix, iy, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz+1}, obj.rgba);
+                    #else
+                        drawAbsolute({ix-1, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                    #endif
                 }
             } else {
                 continue;
@@ -627,10 +723,97 @@ point getDistance(const std::array<point, 8> viewFrame, const double x1, const d
 #else
     void projToFlat(const double x, const double y, const double z, std::map<std::string, object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
         std::array<point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
-        for(object obj : *objectList) {
+        for (const auto& [key, obj] : *objectList) {
             if (obj.rendered) {
-                for (const auto& [key, obj] : obj.points) {
-                    drawAbsolute(getDistance(viewFrame, pnt.x, pnt.y, pnt.z), obj.rgba);
+                for (point pnt : obj.points) {
+                    point p = getDistance(viewFrame, pnt.x, pnt.y, pnt.z);
+                    double ix = (int) p.x;
+                    double iy = (int) p.y;
+                    double iz = (int) p.z;
+                    //Float parts of point
+                    double fx = p.x - ix;
+                    double fy = p.y - iy;
+                    double fz = p.z - iz;
+                    //Brightness co-efficients
+                    double cx0, cx1, cy0, cy1, cz0, cz1;
+                    if (fx > 0.5) {
+                        cx0 = fx;
+                        cx1 = 1 - fx;
+                    } else {
+                        cx0 = 1 - fx;
+                        cx1 = fx;
+                    }
+                    if (fy > 0.5) {
+                        cy0 = fy;
+                        cy1 = 1 - fy;
+                    } else {
+                        cy0 = 1 - fy;
+                        cy1 = fy;
+                    }
+                    if (fz > 0.5) {
+                        cz0 = fz;
+                        cz1 = 1 - fz;
+                    } else {
+                        cz0 = 1 - fz;
+                        cz1 = fz;
+                    }
+                    #ifndef AA
+                        drawAbsolute({ix-1, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz-1}, obj.rgba);
+                        drawAbsolute({ix-1, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz}, obj.rgba);
+                        drawAbsolute({ix, iy, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz}, obj.rgba);
+                        drawAbsolute({ix-1, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy-1, iz+1}, obj.rgba);
+                        drawAbsolute({ix-1, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy, iz+1}, obj.rgba);
+                        drawAbsolute({ix-1, iy+1, iz+1}, obj.rgba);
+                        drawAbsolute({ix, iy+1, iz+1}, obj.rgba);
+                        drawAbsolute({ix+1, iy+1, iz+1}, obj.rgba);
+                    #else
+                        drawAbsolute({ix-1, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz-1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy-1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix-1, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                        drawAbsolute({ix+1, iy+1, iz+1}, obj.rgba * ((cx0 + cy0 + cz0) / 3.0));
+                    #endif
                 }
             } else {
                 continue;
