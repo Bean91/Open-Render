@@ -1,4 +1,4 @@
 *.o
 OpenRender
 .fleet
-*.png
+website/node_modules
