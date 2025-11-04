@@ -11,7 +11,8 @@ int main() {
 	objectList.insert({"sphere0", drawSphere(300.0, 300.0, 300.0, 150, {255, 0, 255, 255})});
 
     projToFlat(-200.0, 200.0, -200.0, &objectList, 45, 45, 45);
-    stbi_write_png("example4.png", WIDTH, HEIGHT, 4, convToBytes(), 0);
+    //Your own image writer
+    makeImage("example4.png", WIDTH, HEIGHT, 4, convToBytes(), 0);
 
     return 0;
 }

@@ -8,7 +8,8 @@ int main() {
     objectList.insert({"recFill", drawRecPrFill(200.0, 200.0, 200.0, 200.0, 200.0, 200.0, {255, 255, 255, 255}, 45, 45, 45)});
 
     projToFlat(0.0, 0.0, 0.0, &objectList, 0, 0, 0);
-    stbi_write_png("example1.png", WIDTH, HEIGHT, 4, convToBytes(), 0);
+    //Your own image writer
+    makeImage("example1.png", WIDTH, HEIGHT, 4, convToBytes(), 0);
 
     return 0;
 }
