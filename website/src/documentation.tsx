@@ -5,6 +5,6 @@ import Navbar from './navbar.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Navbar location={"Home"} />
+    <Navbar location={"Documentation"} />
   </StrictMode>,
 );

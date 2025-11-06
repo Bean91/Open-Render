@@ -5,14 +5,14 @@
 
 int main() {
     //List of all objects
-    std::map<std::string, object> objectList;
-    objectList.insert({"recFill0", drawRecPrFill(200.0, 200.0, 200.0, 200.0, 200.0, 200.0, {255, 255, 255, 255})});
-    objectList.insert({"recFill1", drawRecPrFill(600.0, 200.0, 200.0, 100.0, 100.0, 100.0, {0, 0, 255, 255}, 30, 20, 30)});
-	objectList.insert({"sphere0", drawSphere(300.0, 300.0, 300.0, 150, {255, 0, 255, 255})});
+    std::map<std::string, openrender::object> objectList;
+    objectList.insert({"recFill0", openrender::drawRecPrFill(200.0, 200.0, 200.0, 200.0, 200.0, 200.0, {255, 255, 255, 255})});
+    objectList.insert({"recFill1", openrender::drawRecPrFill(600.0, 200.0, 200.0, 100.0, 100.0, 100.0, {0, 0, 255, 255}, 30, 20, 30)});
+	objectList.insert({"sphere0", openrender::drawSphere(300.0, 300.0, 300.0, 150, {255, 0, 255, 255})});
 
-    projToFlat(-200.0, 200.0, -200.0, &objectList, 45, 45, 45);
+    openrender::projToFlat(-200.0, 200.0, -200.0, &objectList, 45, 45, 45);
     //Your own image writer
-    makeImage("example4.png", WIDTH, HEIGHT, 4, convToBytes(), 0);
+    makeImage("example4.png", WIDTH, HEIGHT, 4, openrender::convToBytes(), 0);
 
     return 0;
 }

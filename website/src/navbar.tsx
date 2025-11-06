@@ -1,18 +1,39 @@
-import React, {useState} from "react";
+import React from "react";
 import "./style.css";
 
-function Navbar() {
-	const [place, setPlace] = useState("Home")
-	const items: string[] = ["Home", "Documentation", "Tests"]
-	const itemClass: string = "p-4 bg-gray-400 h-12 m-2";
+interface NavbarProps {
+	location: string;
+}
+
+
+const Navbar: React.FC<NavbarProps> = ({ location }) => {
+	const items: string[] = ["Home", "Documentation", "Demos"]
+	const itemClass: string = "p-2.5 h-12 m-2 cursor-pointer rounded-md text-white text-xl font-medium items-center";
+
+	interface locations {
+	  [key: string]: string;
+	}
+	const locationList: locations = {
+		"Home": "/index.html",
+		"Documentation": "/documentation.html",
+		"Demos": "/demos.html"
+	};
 
 	const changePlace = (item: string) => {
-		setPlace(item);
+		if (item !== location) {
+			window.location.href = locationList[item];
+		}
 	}
 
 	return (
-		<div className="flex bg-gray-600 h-16 justify-between">
-			{items.map((item: string, key: number) => (<div className={place === item ? "bg-gray-200" + itemClass : itemClass} key={key}><p onClick={changePlace(item)} key={key}>{item}</p></div>))}
+		<div className={"flex bg-gray-600 h-16 justify-between fixed top-0 inset-x-0"}>
+			<div className={"w-3/4"}></div>
+			{items.map((item: string, key: number) => (
+				<div onClick={() => {changePlace(item)}} className={(location === item) ? `bg-gray-700 ${itemClass}` : `${itemClass} bg-gray-500`} key={key}>
+					<p>{item}</p>
+				</div>
+			))}
+			<div className={"w-1/8"}></div>
 		</div>
 	);
 }
