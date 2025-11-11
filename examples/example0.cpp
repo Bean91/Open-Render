@@ -1,10 +1,8 @@
 #include "../open_render.hpp"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 int main() {
     //List of all objects
-    std::map<std::string, openrender::object> objectList;
+    std::map<std::string, openrender::Object> objectList;
     objectList.insert({"recFill", openrender::drawRecPrFill(200.0, 200.0, 200.0, 200.0, 200.0, 200.0, {255, 255, 255, 255})});
 
     openrender::projToFlat(0.0, 0.0, 0.0, &objectList, 0, 0, 0);

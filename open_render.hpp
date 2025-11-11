@@ -30,48 +30,42 @@ namespace openrender {
     const double convRate = PI / 180;
 
     //Color struct
-    struct color {
+    struct Color {
         uint8_t r;
         uint8_t g;
         uint8_t b;
         uint8_t a;
 
-        color operator*(const double bc) const {
+        Color operator*(const double bc) const {
             return {r, g, b, static_cast<uint8_t>(a * bc)};
         }
 
-        bool operator==(const color other) const {
+        bool operator==(const Color other) const {
             return (r == other.r && g == other.g && b == other.b && a == other.a);
         }
     };
 
-    const color EMPTY_COLOR = {0, 0, 0, 0};
+    const Color EMPTY_COLOR = {0, 0, 0, 0};
 
     //Point struct
-    struct point {
+    struct Point {
         double x;
         double y;
         double z;
     };
 
     //Object data storing struct
-    struct object {
-        std::vector<point> points;
-        color rgba;
+    struct Object {
+        std::vector<Point> points;
+        Color rgba;
         bool rendered;
-
-        object (std::vector<point> pointList, color colorValue, bool render) {
-            points = pointList;
-            rgba = colorValue;
-            rendered = render;
-        }
     };
 
     //3 by 3 Matrix type definition
-    typedef std::array<std::array<double, 3>, 3> matrix;
+    typedef std::array<std::array<double, 3>, 3> Matrix;
 
     //3 by 1 Matrix times a 3 by 3 Matrix
-    point matMult(point pnt, matrix mat) {
+    Point matMult(Point pnt, Matrix mat) {
         double tempX = pnt.x; double tempY = pnt.y; double tempZ = pnt.z;
         tempX = pnt.x * mat[0][0] + pnt.y * mat[0][1] + pnt.z * mat[0][2];
         tempY = pnt.x * mat[1][0] + pnt.y * mat[1][1] + pnt.z * mat[1][2];
@@ -80,11 +74,11 @@ namespace openrender {
     }
 
     //For 2D
-    std::array<color, FLATTENED> flattenedPixels = {{EMPTY_COLOR}};
+    std::array<Color, FLATTENED> flattenedPixels = {{EMPTY_COLOR}};
     //For displaying data
     std::array<uint8_t, FLATTENED*4> flattenedBytes = {{0}};
     //For 3D
-    std::array<color, ABSOLUTE> absolutePixels = {{EMPTY_COLOR}};
+    std::array<Color, ABSOLUTE> absolutePixels = {{EMPTY_COLOR}};
 
     //Smart indexing for 1D arrays.
     //For 2D
@@ -98,12 +92,12 @@ namespace openrender {
     }
 
     //Draws individual pixel in 3D space
-    void drawAbsolute(point pnt, color rgba) {
+    void drawAbsolute(Point pnt, Color rgba) {
         if ((pnt.x > 0) && (pnt.y > 0) && (pnt.z > 0) && (pnt.x < WIDTH) && (pnt.y < HEIGHT) && (pnt.z < DEPTH)) {
             if (absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] == EMPTY_COLOR) {
                 absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)] = rgba;
             } else {
-                color temp = absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)];
+                Color temp = absolutePixels[absoluteIndex(pnt.x, pnt.y, pnt.z)];
 
                 uint8_t a = 255-((255-temp.a)*(255-rgba.a)/255);
                 uint8_t r = (temp.r*(255-rgba.a)+rgba.r*rgba.a)/255;
@@ -116,13 +110,13 @@ namespace openrender {
     }
 
     //Draws individual pixel in 2D space
-    void drawFlat(int x, int y, color rgba) {
+    void drawFlat(int x, int y, Color rgba) {
         if ((x > 0) && (y > 0) && (x < WIDTH) && (y < HEIGHT))
             flattenedPixels[flattenedIndex(x, y)] = rgba;
     }
 
     //Draws a line starting at (x0, y0, z0) to (x1, y1, z1)
-    object drawLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const color rgba) {
+    Object drawLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const Color rgba) {
         double dx = std::abs(x1 - x0);
         double dy = std::abs(y1 - y0);
         double dz = std::abs(z1 - z0);
@@ -153,18 +147,18 @@ namespace openrender {
         double vz = dz / np * zs;
 
         //Get each point
-        std::vector<point> points(np);
+        std::vector<Point> points(np);
         for (int i = 0; i < np; i++) {
             points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
         }
 
-        object obj(points, rgba, true);
+        Object obj(points, rgba, true);
         return obj;
     }
 
     //Draws a triangle with verteces (x0, y0, z0), (x1, y1, z1), (x2, y3, z4)
-    object drawTriangle(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, const color rgba) {
-        std::array<std::vector<point>, 3> pointData;
+    Object drawTriangle(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, const Color rgba) {
+        std::array<std::vector<Point>, 3> pointData;
         pointData[0] = drawLine(x0, y0, z0, x1, y1, z1, rgba).points;
         pointData[1] = drawLine(x1, y1, z1, x2, y2, z2, rgba).points;
         pointData[2] = drawLine(x0, y0, z0, x2, y2, z2, rgba).points;
@@ -172,50 +166,50 @@ namespace openrender {
         int l1 = pointData[1].size();
         int l2 = pointData[2].size();
 
-        std::vector<point> pointsList;
+        std::vector<Point> pointsList;
 
         if (l0 <= l1) {
             for (int i = 0; i < l0-1; i++) {
-                std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         } else {
             for (int i = 0; i < l1-1; i++) {
-                std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[1][l1-1-i].x, pointData[1][l1-1-i].y, pointData[1][l1-1-i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         }
 
         if (l1 <= l2) {
             for (int i = 0; i < l1-1; i++) {
-                std::vector<point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         } else {
             for (int i = 0; i < l2-1; i++) {
-                std::vector<point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[1][i].x, pointData[1][i].y, pointData[1][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         }
 
         if (l0 <= l2) {
             for (int i = 0; i < l0-1; i++) {
-                std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         } else {
             for (int i = 0; i < l2-1; i++) {
-                std::vector<point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
+                std::vector<Point> temp = drawLine(pointData[0][i].x, pointData[0][i].y, pointData[0][i].z, pointData[2][i].x, pointData[2][i].y, pointData[2][i].z, rgba).points;
                 pointsList.insert(pointsList.end(), temp.begin(), temp.end());
             }
         }
-        object obj(pointsList, rgba, true);
+        Object obj(pointsList, rgba, true);
         return obj;
     }
 
     //Draws a rectangle outline centered at (x, y, z) with size l x w x h and angles (roll, pitch, yaw)
-    object drawRecPrOut(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::array<point, 8> localPointList = {{
+    Object drawRecPrOut(const double x, const double y, const double z, const double l, const double w, const double h, const Color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<Point, 8> localPointList = {{
             {-l/2, -w/2, -h/2},
             {-l/2, w/2, -h/2},
             {-l/2, -w/2, h/2},
@@ -231,32 +225,32 @@ namespace openrender {
         pitch *= convRate;
         yaw *= convRate;
 
-        std::array<point, 8> vertexList;
+        std::array<Point, 8> vertexList;
 
         //Matrix for roll
-        matrix rMat = {{
+        Matrix rMat = {{
             {1.0, 0.0, 0.0},
             {0.0, cos(roll), -sin(roll)},
             {0.0, sin(roll), cos(roll)}
         }};
         //Matrix for pitch
-        matrix pMat = {{
+        Matrix pMat = {{
             {cos(pitch), 0.0, sin(pitch)},
             {0.0, 1.0, 0.0},
             {-sin(pitch), 0.0, cos(pitch)}
         }};
         //Matrix for yaw
-        matrix yMat = {{
+        Matrix yMat = {{
             {cos(yaw), -sin(yaw), 0.0},
             {sin(yaw), cos(yaw), 0.0},
             {0.0, 0.0, 1.0}
         }};
         //Array of matrices
-        std::array<matrix, 3> matArr = {rMat, pMat, yMat};
+        std::array<Matrix, 3> matArr = {rMat, pMat, yMat};
 
         for (int i = 0; i < size(localPointList); i++) {
-            point pnt = localPointList[i];
-            for (matrix mat : matArr) {
+            Point pnt = localPointList[i];
+            for (Matrix mat : matArr) {
                 pnt = matMult(pnt, mat);
             }
             pnt.x += x;
@@ -265,8 +259,8 @@ namespace openrender {
             vertexList[i] = {round(pnt.x), round(pnt.y), round(pnt.z)};
         }
 
-        std::vector<point> pointsList;
-        std::vector<point> temp;
+        std::vector<Point> pointsList;
+        std::vector<Point> temp;
 
         temp = drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
@@ -292,13 +286,13 @@ namespace openrender {
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         temp = drawLine(vertexList[5].x, vertexList[5].y, vertexList[5].z, vertexList[7].x, vertexList[7].y, vertexList[7].z, rgba).points;
         pointsList.insert(pointsList.end(), temp.begin(), temp.end());
-        object obj(pointsList, rgba, true);
+        Object obj(pointsList, rgba, true);
         return obj;
     }
 
     //Draws a filled rectangle centered at (x, y, z) with size l x w x h and angles (roll, pitch, yaw)
-    object drawRecPrFill(const double x, const double y, const double z, const double l, const double w, const double h, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::array<point, 8> localPointList = {{
+    Object drawRecPrFill(const double x, const double y, const double z, const double l, const double w, const double h, const Color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<Point, 8> localPointList = {{
             {-l/2, -w/2, -h/2},
             {-l/2, w/2, -h/2},
             {-l/2, -w/2, h/2},
@@ -308,40 +302,40 @@ namespace openrender {
             {l/2, -w/2, h/2},
             {l/2, w/2, h/2}
         }};
-        std::vector<point> pointsList;
-        std::vector<point> temp;
+        std::vector<Point> pointsList;
+        std::vector<Point> temp;
 
         //Converting to radians
         roll *= convRate;
         pitch *= convRate;
         yaw *= convRate;
 
-        std::array<point, 8> vertexList;
+        std::array<Point, 8> vertexList;
 
         //Matrix for roll
-        matrix rMat = {{
+        Matrix rMat = {{
             {1.0, 0.0, 0.0},
             {0.0, cos(roll), -sin(roll)},
             {0.0, sin(roll), cos(roll)}
         }};
         //Matrix for pitch
-        matrix pMat = {{
+        Matrix pMat = {{
             {cos(pitch), 0.0, sin(pitch)},
             {0.0, 1.0, 0.0},
             {-sin(pitch), 0.0, cos(pitch)}
         }};
         //Matrix for yaw
-        matrix yMat = {{
+        Matrix yMat = {{
             {cos(yaw), -sin(yaw), 0.0},
             {sin(yaw), cos(yaw), 0.0},
             {0.0, 0.0, 1.0}
         }};
         //Array of matrices
-        std::array<matrix, 3> matArr = {rMat, pMat, yMat};
+        std::array<Matrix, 3> matArr = {rMat, pMat, yMat};
 
         for (int i = 0; i < size(localPointList); i++) {
-            point pnt = localPointList[i];
-            for (matrix mat : matArr) {
+            Point pnt = localPointList[i];
+            for (Matrix mat : matArr) {
                 pnt = matMult(pnt, mat);
             }
             pnt.x += x;
@@ -350,7 +344,7 @@ namespace openrender {
             vertexList[i] = {round(pnt.x), round(pnt.y), round(pnt.z)};
         }
 
-        std::array<std::vector<point>, 12> edgeDataList = {{
+        std::array<std::vector<Point>, 12> edgeDataList = {{
             drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[1].x, vertexList[1].y, vertexList[1].z, rgba).points,
             drawLine(vertexList[0].x, vertexList[0].y, vertexList[0].z, vertexList[4].x, vertexList[4].y, vertexList[4].z, rgba).points,
             drawLine(vertexList[1].x, vertexList[1].y, vertexList[1].z, vertexList[5].x, vertexList[5].y, vertexList[5].z, rgba).points,
@@ -389,15 +383,15 @@ namespace openrender {
             temp = drawLine(edgeDataList[9][i].x, edgeDataList[9][i].y, edgeDataList[9][i].z, edgeDataList[11][i].x, edgeDataList[11][i].y, edgeDataList[11][i].z, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
-        object obj(pointsList, rgba, true);
+        Object obj(pointsList, rgba, true);
         return obj;
     }
 
     //Draws a circle centered at (x, y, z) with radius r and angles (roll, pitch, yaw)
-    object drawCircle(const double x, const double y, const double z, const double r, const color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::vector<point> points;
-        std::vector<point> pointsList;
-        std::vector<point> temp;
+    Object drawCircle(const double x, const double y, const double z, const double r, const Color rgba, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::vector<Point> points;
+        std::vector<Point> pointsList;
+        std::vector<Point> temp;
 
         int tnp = 2*PI*r;
         int onp = tnp/8;
@@ -411,9 +405,9 @@ namespace openrender {
 
         int len = points.size();
 
-        std::vector<point> fPoints;
+        std::vector<Point> fPoints;
         for (int i = 0; i < len; i++) {
-            point pnt = points[i];
+            Point pnt = points[i];
             fPoints.push_back({pnt.x, pnt.y, 0});
             fPoints.push_back({pnt.x, -pnt.y, 0});
             fPoints.push_back({-pnt.x, pnt.y, 0});
@@ -430,29 +424,29 @@ namespace openrender {
         yaw *= convRate;
 
         //Matrix for roll
-        matrix rMat = {{
+        Matrix rMat = {{
             {1.0, 0.0, 0.0},
             {0.0, cos(roll), -sin(roll)},
             {0.0, sin(roll), cos(roll)}
         }};
         //Matrix for pitch
-        matrix pMat = {{
+        Matrix pMat = {{
             {cos(pitch), 0.0, sin(pitch)},
             {0.0, 1.0, 0.0},
             {-sin(pitch), 0.0, cos(pitch)}
         }};
         //Matrix for yaw
-        matrix yMat = {{
+        Matrix yMat = {{
             {cos(yaw), -sin(yaw), 0.0},
             {sin(yaw), cos(yaw), 0.0},
             {0.0, 0.0, 1.0}
         }};
         //Array of matrices
-        std::array<matrix, 3> matArr = {rMat, pMat, yMat};
+        std::array<Matrix, 3> matArr = {rMat, pMat, yMat};
 
         for (int i = 0; i < fPoints.size(); i++) {
-            point pnt = fPoints[i];
-            for (matrix mat : matArr) {
+            Point pnt = fPoints[i];
+            for (Matrix mat : matArr) {
                 pnt = matMult(pnt, mat);
             }
             pnt.x += x;
@@ -479,29 +473,29 @@ namespace openrender {
             temp = drawLine(fPoints[(i*8)+7].x, fPoints[(i*8)+7].y, fPoints[(i*8)+7].z, fPoints[((i+1)*8)+7].x+1, fPoints[((i+1)*8)+7].y+1, fPoints[((i+1)*8)+7].z+1, rgba).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
-        object obj(pointsList, rgba, true);
+        Object obj(pointsList, rgba, true);
         return obj;
     }
 
     //Draws a sphere centered at (x, y, z) with radius r
-    object drawSphere(const double x, const double y, const double z, const double r, const color rgba) {
+    Object drawSphere(const double x, const double y, const double z, const double r, const Color rgba) {
         int tnp = 2*PI*r;
         double interval = 180/(r*PI);
         double theta = 0;
-        std::vector<point> pointsList;
-        std::vector<point> temp;
+        std::vector<Point> pointsList;
+        std::vector<Point> temp;
 
         for (int i = 0; i < tnp/2; i++){
             theta += interval;
             temp = drawCircle(x, y, z, r, rgba, theta).points;
             pointsList.insert(pointsList.end(), temp.begin(), temp.end());
         }
-        object obj(pointsList, rgba, true);
+        Object obj(pointsList, rgba, true);
         return obj;
     }
 
     //Returns values for a line
-    std::vector<point> drawBorderLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1) {
+    std::vector<Point> drawBorderLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1) {
         double dx = std::abs(x1 - x0);
         double dy = std::abs(y1 - y0);
         double dz = std::abs(z1 - z0);
@@ -533,7 +527,7 @@ namespace openrender {
 
 
         //Get each point
-        std::vector<point> points(np);
+        std::vector<Point> points(np);
         for (int i = 0; i < np; i++) {
             points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
         }
@@ -542,8 +536,8 @@ namespace openrender {
     }
 
     //Returns border values
-    std::array<point, 8> viewBorder(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::array<point, 8> localPointList = {{
+    std::array<Point, 8> viewBorder(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<Point, 8> localPointList = {{
             {-WIDTH/2, -HEIGHT/2, -DEPTH/2},
             {-WIDTH/2, HEIGHT/2, -DEPTH/2},
             {-WIDTH/2, -HEIGHT/2, DEPTH/2},
@@ -559,32 +553,32 @@ namespace openrender {
         pitch *= convRate;
         yaw *= convRate;
 
-        std::array<point, 8> vertexList;
+        std::array<Point, 8> vertexList;
 
         //Matrix for roll
-        matrix rMat = {{
+        Matrix rMat = {{
             {1.0, 0.0, 0.0},
             {0.0, cos(roll), -sin(roll)},
             {0.0, sin(roll), cos(roll)}
         }};
         //Matrix for pitch
-        matrix pMat = {{
+        Matrix pMat = {{
             {cos(pitch), 0.0, sin(pitch)},
             {0.0, 1.0, 0.0},
             {-sin(pitch), 0.0, cos(pitch)}
         }};
         //Matrix for yaw
-        matrix yMat = {{
+        Matrix yMat = {{
             {cos(yaw), -sin(yaw), 0.0},
             {sin(yaw), cos(yaw), 0.0},
             {0.0, 0.0, 1.0}
         }};
         //Array of matrices
-        std::array<matrix, 3> matArr = {rMat, pMat, yMat};
+        std::array<Matrix, 3> matArr = {rMat, pMat, yMat};
 
         for (int i = 0; i < size(localPointList); i++) {
-            point pnt = localPointList[i];
-            for (matrix mat : matArr) {
+            Point pnt = localPointList[i];
+            for (Matrix mat : matArr) {
                 pnt = matMult(pnt, mat);
             }
             pnt.x += x + WIDTH/2;
@@ -596,7 +590,7 @@ namespace openrender {
     }
 
     //Gets the distance from a point to the line along the view frame
-    point getDistance(const std::array<point, 8> viewFrame, const double x1, const double y1, const double z1) {
+    Point getDistance(const std::array<Point, 8> viewFrame, const double x1, const double y1, const double z1) {
         double x, y, z;
         const double mx = (viewFrame[0].z - viewFrame[4].z)/(viewFrame[0].x - viewFrame[4].x);
         const double my = (viewFrame[0].x - viewFrame[1].x)/(viewFrame[0].y - viewFrame[1].y);
@@ -609,12 +603,12 @@ namespace openrender {
     }
 
     //Convert the 3D data to 2D
-    void projToFlat(const double x, const double y, const double z, std::map<std::string, object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
-        std::array<point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
+    void projToFlat(const double x, const double y, const double z, std::map<std::string, Object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
+        std::array<Point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
         for(const auto& [key, obj] : *objectList) {
             if (obj.rendered) {
-                for (point pnt : obj.points) {
-                    point p = getDistance(viewFrame, pnt.x, pnt.y, pnt.z);
+                for (Point pnt : obj.points) {
+                    Point p = getDistance(viewFrame, pnt.x, pnt.y, pnt.z);
                     double ix = (int) p.x;
                     double iy = (int) p.y;
                     double iz = (int) p.z;
