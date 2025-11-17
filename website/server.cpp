@@ -4,6 +4,11 @@
 #include <string>
 using json = nlohmann::json;
 
+typedef std::pair<std::pair<openrender::Point, openrender::Point>,
+        std::map<std::string, std::pair<std::string,
+        std::pair<std::vector<openrender::Point>, openrender::Color>>>>
+        request;
+
 //Start nlomann/json helper functions
 void to_json(json& j, const openrender::Point& p) {
     j = json{
@@ -35,166 +40,45 @@ void from_json(const json& j, openrender::Color& c) {
     j.at("a").get_to(c.a);
 }
 
-void to_json(json& j, const openrender::Object& obj) {
-    json *points = new json[obj.points.size()];
+void to_json(json& j, const request& list) {
+    j["transformations"]["x"] = list.first.first.x;
+    j["transformations"]["y"] = list.first.first.y;
+    j["transformations"]["z"] = list.first.first.z;
+    j["transformations"]["roll"] = list.first.second.x;
+    j["transformations"]["pitch"] = list.first.second.y;
+    j["transformations"]["yaw"] = list.first.second.z;
 
-    for (int i = 0; i < obj.points.size(); i++) {
-        points[i] = json{
-            {"x", obj.points[i].x},
-            {"y", obj.points[i].y},
-            {"z", obj.points[i].z}
-        };
-    }
-
-    j = json{
-        {"rgba", {
-            {"r", obj.rgba.r},
-            {"g", obj.rgba.g},
-            {"b", obj.rgba.b},
-            {"a", obj.rgba.a}
-        }},
-        {"rendered", obj.rendered}
-    };
-
-    for (json pnt : *points) {
-        j["points"].push_back(pnt);
+    for (const auto [key, obj] : list.second) {
+        j["requests"][key]["type"] = obj.first;
+        j["requests"][key]["color"]["r"] = obj.second.second.r;
+        j["requests"][key]["color"]["g"] = obj.second.second.g;
+        j["requests"][key]["color"]["b"] = obj.second.second.b;
+        j["requests"][key]["color"]["a"] = obj.second.second.a;
+        for (const openrender::Point pnt : obj.second.first) {
+            j["requests"][key]["points"].push_back(json{{"x", pnt.x}, {"y", pnt.y}, {"z", pnt.z}});
+        }
     }
 }
 
-void from_json(const json& j, openrender::Object& obj) {
-    size_t size = j.count("points");
-    obj.points.resize(size);
+void from_json(const json& j, request& list) {
+    j.at("transformations").at("x").get_to(list.first.first.x);
+    j.at("transformations").at("y").get_to(list.first.first.y);
+    j.at("transformations").at("z").get_to(list.first.first.z);
+    j.at("transformations").at("roll").get_to(list.first.second.x);
+    j.at("transformations").at("pitch").get_to(list.first.second.y);
+    j.at("transformations").at("yaw").get_to(list.first.second.z);
 
-    for (int i = 0; i < size; i++) {
-        j.at("points").at(i).at("x").get_to(obj.points[i].x);
-        j.at("points").at(i).at("z").get_to(obj.points[i].y);
-        j.at("points").at(i).at("z").get_to(obj.points[i].z);
+    for (auto& [key, val] : j.at("requests").items()) {
+        list.second.insert({key, {val.at("type"), {{}, {val.at("color").at("r"), val.at("color").at("g"), val.at("color").at("b"), val.at("color").at("a")}}}});
+        if (val.at("points").size()%3 == 0) {
+            for (int i = 0; i < val.at("points").size()/3; i++) {
+                list.second[key].second.first.push_back({val.at("points").at(3*i), val.at("points").at(3*i+1), val.at("points").at(3*i+2)});
+            }
+        } else {
+            list.second[key].second.first.push_back({val.at("points").at(0), val.at("points").at(1), val.at("points").at(2)});
+            list.second[key].second.first.push_back({val.at("points").at(3), 0.0, 0.0});
+        }
     }
-
-    j.at("rgba").at("r").get_to(obj.rgba.r);
-    j.at("rgba").at("g").get_to(obj.rgba.g);
-    j.at("rgba").at("b").get_to(obj.rgba.b);
-    j.at("rgba").at("a").get_to(obj.rgba.a);
-    j.at("rendered").get_to(obj.rendered);
-}
-
-void to_json(json& j, const std::map<std::string, openrender::Object>& list) {
-    for (auto [key, obj] : list) {
-        json *points = new json[obj.points.size()];
-
-        for (int i = 0; i < obj.points.size(); i++) {
-            points[i] = json{
-                {"x", obj.points[i].x},
-                {"y", obj.points[i].y},
-                {"z", obj.points[i].z}
-            };
-        }
-
-        json temp = json{
-            {"rgba", {
-                {"r", obj.rgba.r},
-                {"g", obj.rgba.g},
-                {"b", obj.rgba.b},
-                {"a", obj.rgba.a}
-            }},
-            {"rendered", obj.rendered}
-        };
-
-        for (json pnt : *points) {
-            temp["points"].push_back(pnt);
-        }
-        j[key] = temp;
-    }
-}
-
-void from_json(const json& j, std::map<std::string, openrender::Object>& list) {
-    size_t size = j.size();
-    for (auto& [key, val] : j.items()) {
-        std::vector<openrender::Point> temppoints;
-        openrender::Color tempcolor;
-        openrender::Object obj(temppoints, tempcolor, false);
-        list.insert({key, obj});
-        list.at(key).points.resize(size);
-
-        for (int i = 0; i < size; i++) {
-            val.at("points").at(i).at("x").get_to(list[key].points[i].x);
-            val.at("points").at(i).at("z").get_to(list[key].points[i].y);
-            val.at("points").at(i).at("z").get_to(list[key].points[i].z);
-        }
-
-        val.at("rgba").at("r").get_to(list[key].rgba.r);
-        val.at("rgba").at("g").get_to(list[key].rgba.g);
-        val.at("rgba").at("b").get_to(list[key].rgba.b);
-        val.at("rgba").at("a").get_to(list[key].rgba.a);
-        val.at("rendered").get_to(list[key].rendered);
-    }
-}
-
-void to_json(json& j, const std::pair<std::pair<openrender::Point, openrender::Point>, std::map<std::string, openrender::Object>>& list) {
-    j["x"] = list.first.first.x;
-    j["y"] = list.first.first.y;
-    j["z"] = list.first.first.z;
-    j["roll"] = list.first.second.x;
-    j["pitch"] = list.first.second.y;
-    j["yaw"] = list.first.second.z;
-    for (auto [key, obj] : list.second) {
-        json *points = new json[obj.points.size()];
-
-        for (int i = 0; i < obj.points.size(); i++) {
-            points[i] = json{
-                {"x", obj.points[i].x},
-                {"y", obj.points[i].y},
-                {"z", obj.points[i].z}
-            };
-        }
-
-        json temp = json{
-            {"rgba", {
-                {"r", obj.rgba.r},
-                {"g", obj.rgba.g},
-                {"b", obj.rgba.b},
-                {"a", obj.rgba.a}
-            }},
-            {"rendered", obj.rendered}
-        };
-
-        for (json pnt : *points) {
-            temp["points"].push_back(pnt);
-        }
-        j[key] = temp;
-    }
-}
-
-void from_json(const json& j, std::pair<std::pair<openrender::Point, openrender::Point>, std::map<std::string, openrender::Object>>& list) {
-    size_t size = j.size()-6;
-    for (auto& [key, val] : j.items()) {
-        if (key == "x" || key == "y" || key == "x" || key == "roll" || key == "pitch" || key == "yaw") {
-            continue;
-        }
-        std::vector<openrender::Point> temppoints;
-        openrender::Color tempcolor;
-        openrender::Object obj(temppoints, tempcolor, false);
-        list.second.insert({key, obj});
-        list.second.at(key).points.resize(size);
-
-        for (int i = 0; i < size; i++) {
-            val.at("points").at(i).at("x").get_to(list.second[key].points[i].x);
-            val.at("points").at(i).at("z").get_to(list.second[key].points[i].y);
-            val.at("points").at(i).at("z").get_to(list.second[key].points[i].z);
-        }
-
-        val.at("rgba").at("r").get_to(list.second[key].rgba.r);
-        val.at("rgba").at("g").get_to(list.second[key].rgba.g);
-        val.at("rgba").at("b").get_to(list.second[key].rgba.b);
-        val.at("rgba").at("a").get_to(list.second[key].rgba.a);
-        val.at("rendered").get_to(list.second[key].rendered);
-    }
-    j.at("x").get_to(list.first.first.x);
-    j.at("y").get_to(list.first.first.y);
-    j.at("z").get_to(list.first.first.z);
-    j.at("roll").get_to(list.first.second.x);
-    j.at("pitch").get_to(list.first.second.y);
-    j.at("yaw").get_to(list.first.second.z);
 }
 //End nlomann/json helper functions
 
@@ -205,8 +89,41 @@ int main() {
 	.Get("/demo", [&](const auto& req, auto& res) {
 		auto request_data = json::parse(req.body);
 
-        std::pair<std::pair<openrender::Point, openrender::Point>, std::map<std::string, openrender::Object>> list;
+        request list;
         from_json(request_data, list);
+
+        const double x = list.first.first.x;
+        const double y = list.first.first.y;
+        const double z = list.first.first.z;
+        const double roll = list.first.second.x;
+        const double pitch = list.first.second.y;
+        const double yaw = list.first.second.z;
+
+        std::map<std::string, openrender::Object> objectList;
+        for (auto& [key, val] : list.second) {
+            std::vector<openrender::Point> points = val.second.first;
+            if (val.first == "line") {
+                objectList.insert({key, openrender::drawLine(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
+            } else if (val.first == "triangle") {
+                objectList.insert({key, openrender::drawTriangle(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, points[2].x, points[2].y, points[2].z, val.second.second)});
+            } else if (val.first == "recPrOut") {
+                if (points.size() == 3) {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
+                } else if (points.size() == 2) {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
+                }
+            } else if (val.first == "recPrFill") {
+                if (points.size() == 3) {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
+                } else if (points.size() == 2) {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
+                }
+            } else if (val.first == "circle") {
+                objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
+            } else if (val.first == "sphere") {
+                objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
+            }
+        }
 	})
 	.listen("0.0.0.0", 8080);
 }
