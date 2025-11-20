@@ -5,7 +5,6 @@ interface NavbarProps {
 	location: string;
 }
 
-
 const Navbar: React.FC<NavbarProps> = ({ location }) => {
 	const items: string[] = ["Home", "Documentation", "Demos"]
 	const itemClass: string = "p-2.5 h-12 m-2 cursor-pointer rounded-md text-white text-xl font-medium items-center";

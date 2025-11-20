@@ -124,6 +124,17 @@ int main() {
                 objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
             }
         }
+        openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
+
+        void *bytes = openrender::convToBytes();
+        size_t size = HEIGHT * WIDTH;
+
+        if (bytes && size > 0) {
+            res.set_content(static_cast<const char*>(bytes), size, "application/octet-stream");
+        } else {
+            res.status = 500;
+            res.set_content("Error: Failed to draw content", "text/plain");
+        }
 	})
 	.listen("0.0.0.0", 8080);
 }
