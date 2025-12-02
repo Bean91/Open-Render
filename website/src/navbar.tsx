@@ -12,6 +12,7 @@ const Navbar: React.FC<NavbarProps> = ({ location }) => {
 	interface locations {
 	  [key: string]: string;
 	}
+
 	const locationList: locations = {
 		"Home": "/index.html",
 		"Documentation": "/documentation.html",

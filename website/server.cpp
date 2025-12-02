@@ -54,8 +54,10 @@ void to_json(json& j, const request& list) {
         j["requests"][key]["color"]["g"] = obj.second.second.g;
         j["requests"][key]["color"]["b"] = obj.second.second.b;
         j["requests"][key]["color"]["a"] = obj.second.second.a;
+        int index = 0;
         for (const openrender::Point pnt : obj.second.first) {
-            j["requests"][key]["points"].push_back(json{{"x", pnt.x}, {"y", pnt.y}, {"z", pnt.z}});
+            j["requests"][key]["points"].push_back(json{index, {{"x", pnt.x}, {"y", pnt.y}, {"z", pnt.z}}});
+            index++;
         }
     }
 }
@@ -72,7 +74,7 @@ void from_json(const json& j, request& list) {
         list.second.insert({key, {val.at("type"), {{}, {val.at("color").at("r"), val.at("color").at("g"), val.at("color").at("b"), val.at("color").at("a")}}}});
         if (val.at("points").size()%3 == 0) {
             for (int i = 0; i < val.at("points").size()/3; i++) {
-                list.second[key].second.first.push_back({val.at("points").at(3*i), val.at("points").at(3*i+1), val.at("points").at(3*i+2)});
+                list.second[key].second.first.push_back({val.at("points").at(i).at("x"), val.at("points").at(i).at("y"), val.at("points").at(i).at("z")});
             }
         } else {
             list.second[key].second.first.push_back({val.at("points").at(0), val.at("points").at(1), val.at("points").at(2)});
@@ -86,7 +88,7 @@ int main() {
 	httplib::Server svr;
 
 	svr
-	.Get("/demo", [&](const auto& req, auto& res) {
+	.Post("/demo", [&](const auto& req, auto& res) {
 		auto request_data = json::parse(req.body);
 
         request list;
