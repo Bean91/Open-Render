@@ -720,6 +720,7 @@ namespace openrender {
     }
 
     void* convToBytes() {
+        memset(&flattenedBytes[0], 0, HEIGHT*WIDTH*4);
         for (int i = 0; i < FLATTENED; i++) {
             flattenedBytes[i*4] = flattenedPixels[i].r;
             flattenedBytes[i*4+1] = flattenedPixels[i].g;

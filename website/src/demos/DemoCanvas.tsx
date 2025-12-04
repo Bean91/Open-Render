@@ -61,7 +61,25 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 							"z": request.inputPoints[5],
 						}
 					}
-				} else if (request.type === "recPrFill" || request.type === "recPrOut" || request.type === "triangle") {
+				} else if (request.type === "recPrFill" || request.type === "recPrOut") {
+					j["requests"][request.name]["points"] = {
+						0: {
+							"x": request.inputPoints[0],
+							"y": request.inputPoints[1],
+							"z": request.inputPoints[2],
+						},
+						1: {
+							"x": request.inputPoints[3],
+							"y": request.inputPoints[4],
+							"z": request.inputPoints[5],
+						},
+						2: {
+							"x": request.roll,
+							"y": request.pitch,
+							"z": request.yaw,
+						}
+					}
+				} else if (request.type === "triangle") {
 					j["requests"][request.name]["points"] = {
 						0: {
 							"x": request.inputPoints[0],
@@ -101,13 +119,13 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 						},
 						1: {
 							"x": request.inputPoints[3],
-							"y": request.inputPoints[4],
-							"z": request.inputPoints[5],
-						},
-						2: {
-							"x": request.inputPoints[6],
 							"y": 0,
 							"z": 0,
+						},
+						2: {
+							"x": request.roll,
+							"y": request.pitch,
+							"z": request.yaw,
 						}
 					}
 				}
@@ -115,7 +133,8 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 			console.log(j);
 
 			try {
-				const response = await fetch("0.0.0.0:8080/demo", {
+				console.log("try");
+				const response = await fetch("http://localhost:8080/demo", {
 					"method": "POST",
 					"headers": {
 						"Content-Type": "application/json",
@@ -123,6 +142,7 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 					},
 					"body": JSON.stringify(j)
 				});
+				console.log(response);
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}, response: ${response.body}`);
 				}
@@ -134,8 +154,10 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 			    if (!canvas) return;
 			    const ctx = canvas.getContext('2d');
 			    if (!ctx) return;
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
 			    const imageData = ctx.createImageData(width, height);
-			    imageData.data.set(new Uint8ClampedArray(pixels));
+			    imageData.data.set(pixels);
+				console.log(imageData);
 			    ctx.putImageData(imageData, 0, 0);
 			} catch(error) {
 				console.error('Error fetching binary data:', error);
@@ -146,7 +168,7 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 	const width: number = 852;
 	const height: number = 480;
 
-	return <div className={"bg-gray-700 flex items-center rounded-md m-4 p-2"}><canvas width={width} height={height} ref={canvasRef} /></div>;
+	return <div className={"bg-gray-700 items-center rounded-md m-4 p-2"}><canvas width={width} height={height} ref={canvasRef} /></div>;
 }
 
 export default DemoCanvas;
