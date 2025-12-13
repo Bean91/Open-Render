@@ -12,6 +12,9 @@ typedef std::pair<std::pair<openrender::Point, openrender::Point>,
 int main() {
 	httplib::Server svr;
 
+    void *bytes;
+    size_t size = HEIGHT * WIDTH * 4;
+
     svr
     .Options("/(.*)", [&](const httplib::Request&, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -50,24 +53,26 @@ int main() {
         const double yaw = list.first.second.z;
 
         std::map<std::string, openrender::Object> objectList = {};
-        for (auto& [key, val] : list.second) {
-            std::vector<openrender::Point> points = val.second.first;
-            for (openrender::Point pnt : points) {
-                std::cout << key << " " << val.first << " x: " << pnt.x << " y: " << pnt.x << " z: " << pnt.x << std::endl;
+        try {
+            for (auto& [key, val] : list.second) {
+                std::vector<openrender::Point> points = val.second.first;
+                if (val.first == "line") {
+                    objectList.insert({key, openrender::drawLine(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
+                } else if (val.first == "triangle") {
+                    objectList.insert({key, openrender::drawTriangle(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, points[2].x, points[2].y, points[2].z, val.second.second)});
+                } else if (val.first == "recPrOut") {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
+                } else if (val.first == "recPrFill") {
+                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
+                } else if (val.first == "circle") {
+                    objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
+                } else if (val.first == "sphere") {
+                    objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
+                }
             }
-            if (val.first == "line") {
-                objectList.insert({key, openrender::drawLine(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
-            } else if (val.first == "triangle") {
-                objectList.insert({key, openrender::drawTriangle(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, points[2].x, points[2].y, points[2].z, val.second.second)});
-            } else if (val.first == "recPrOut") {
-                objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
-            } else if (val.first == "recPrFill") {
-                objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
-            } else if (val.first == "circle") {
-                objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
-            } else if (val.first == "sphere") {
-                objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
-            }
+        } catch(...) {
+            res.status = 500;
+            res.set_content("Error: Failed to draw content", "text/plain");
         }
         for (auto& [key, val] : objectList) {
             std::cout << key << std::endl;
@@ -75,10 +80,8 @@ int main() {
 
         openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
 
-        void *bytes = openrender::convToBytes();
-        size_t size = HEIGHT * WIDTH * 4;
+        bytes = openrender::convToBytes();
 
-        std::cout << size << std::endl;
         if (bytes && size > 0) {
             res.set_content(static_cast<const char*>(bytes), size, "application/octet-stream");
         } else {
