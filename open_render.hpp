@@ -602,6 +602,12 @@ namespace openrender {
         return {x, y, z};
     }
 
+    //Clear 2D and 3D canvases
+    void clearCanvas() {
+        std::fill(flattenedPixels.begin(), flattenedPixels.end(), EMPTY_COLOR);
+        std::fill(absolutePixels.begin(), absolutePixels.end(), EMPTY_COLOR);
+    }
+
     //Convert the 3D data to 2D
     void projToFlat(const double x, const double y, const double z, std::map<std::string, Object> *objectList, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
         std::array<Point, 8> viewFrame = viewBorder(x, y, z, roll, pitch, yaw);
@@ -720,7 +726,7 @@ namespace openrender {
     }
 
     void* convToBytes() {
-        memset(&flattenedBytes[0], 0, HEIGHT*WIDTH*4);
+        memset(&flattenedBytes[0], 0, sizeof(flattenedBytes));
         for (int i = 0; i < FLATTENED; i++) {
             flattenedBytes[i*4] = flattenedPixels[i].r;
             flattenedBytes[i*4+1] = flattenedPixels[i].g;

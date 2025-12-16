@@ -54,6 +54,8 @@ int main() {
 
         std::map<std::string, openrender::Object> objectList = {};
         try {
+            objectList = {};
+            openrender::clearCanvas();
             for (auto& [key, val] : list.second) {
                 std::vector<openrender::Point> points = val.second.first;
                 if (val.first == "line") {
@@ -63,7 +65,7 @@ int main() {
                 } else if (val.first == "recPrOut") {
                     objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
                 } else if (val.first == "recPrFill") {
-                    objectList.insert({key, openrender::drawRecPrOut(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
+                    objectList.insert({key, openrender::drawRecPrFill(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
                 } else if (val.first == "circle") {
                     objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
                 } else if (val.first == "sphere") {
@@ -77,6 +79,7 @@ int main() {
         for (auto& [key, val] : objectList) {
             std::cout << key << std::endl;
         }
+        std::cout << std::endl;
 
         openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
 
