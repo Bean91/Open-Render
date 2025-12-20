@@ -154,10 +154,10 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 			    if (!canvas) return;
 			    const ctx = canvas.getContext('2d');
 			    if (!ctx) return;
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
 			    const imageData = ctx.createImageData(width, height);
 			    imageData.data.set(pixels);
 				console.log(imageData);
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
 			    ctx.putImageData(imageData, 0, 0);
 			} catch(error) {
 				console.error('Error fetching binary data:', error);
