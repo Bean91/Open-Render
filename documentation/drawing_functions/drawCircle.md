@@ -12,15 +12,15 @@ returns an [`Object`](../structures/object.md)
 ### Parameters
 | Parameter | Type                              | Use                    | Optional |
 |-----------|-----------------------------------|------------------------|----------|
-| `x`       | `double`                          | X Coordinate of center | No       |
-| `y`       | `double`                          | Y Coordinate of center | No       |
-| `z`       | `double`                          | Z Coordinate of center | No       |
-| `r`       | `double`                          | Radius of circle       | No       |
-| `rgba`    | [`Color`](../structures/color.md) | Color of circle        | No       |
-| `roll`    | `double`                          | Roll of circle         | Yes      |
-| `pitch`   | `double`                          | Pitch of circle        | Yes      |
-| `yaw`     | `double`                          | Yaw of circle          | Yes      |
-
+| `x`       | `double`                          | X Coordinate of center | ❌        |
+| `y`       | `double`                          | Y Coordinate of center | ❌        |
+| `z`       | `double`                          | Z Coordinate of center | ❌        |
+| `r`       | `double`                          | Radius of circle       | ❌        |
+| `rgba`    | [`Color`](../structures/color.md) | Color of circle        | ❌        |
+| `roll`    | `double`                          | Roll of circle         | ✅        |
+| `pitch`   | `double`                          | Pitch of circle        | ✅        |
+| `yaw`     | `double`                          | Yaw of circle          | ✅        |
+---
 ## Example
 
 ```cpp
