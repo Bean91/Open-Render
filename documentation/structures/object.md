@@ -9,11 +9,11 @@ struct Color {
 ## Basic Info
 The structure that stores objects as points and a color before being flattened into 2D.
 ### Variables
-| Variable   | Type                               | Use                  | Optional |
-|------------|------------------------------------|----------------------|----------|
-| `points`   | [`std::vector<Point>`](./point.md) | Red value of color   | ❌        |
-| `rgba`     | [`Color`](./color.md)              | Green value of color | ❌        |
-| `rendered` | `bool`                             | Blue value of color  | ❌        |
+| Variable   | Type                               | Use                                     | Optional |
+|------------|------------------------------------|-----------------------------------------|----------|
+| `points`   | [`std::vector<Point>`](./point.md) | List of every point in object           | ❌        |
+| `rgba`     | [`Color`](./color.md)              | Color of all the points                 | ❌        |
+| `rendered` | `bool`                             | Flag determining if it will be rendered | ❌        |
 ---
 ## Example
 ```cpp
