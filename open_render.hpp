@@ -494,47 +494,6 @@ namespace openrender {
         return obj;
     }
 
-    //Returns values for a line
-    std::vector<Point> drawBorderLine(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1) {
-        double dx = std::abs(x1 - x0);
-        double dy = std::abs(y1 - y0);
-        double dz = std::abs(z1 - z0);
-
-        //Getting sign of vector
-        int xs = 1;
-        int ys = 1;
-        int zs = 1;
-        if ((x1 - x0) < 0) {
-            xs = -1;
-        }
-        if ((y1 - y0) < 0) {
-            ys = -1;
-        }
-        if ((z1 - z0) < 0) {
-            zs = -1;
-        }
-
-        //Total numbers of points (largest distance value)
-        int np;
-        if (dx >= dy && dx >= dz) np = (int) dx;
-        else if (dy >= dx && dy >= dz) np = (int) dy;
-        else np = (int) dz;
-
-        //Distances between points
-        double vx = dx / np * xs;
-        double vy = dy / np * ys;
-        double vz = dz / np * zs;
-
-
-        //Get each point
-        std::vector<Point> points(np);
-        for (int i = 0; i < np; i++) {
-            points[i] = {x0 + i*vx, y0 + i*vy, z0 + i*vz};
-        }
-
-        return points;
-    }
-
     //Returns border values
     std::array<Point, 8> viewBorder(const double x, const double y, const double z, double roll = 0.0, double pitch = 0.0, double yaw = 0.0) {
         std::array<Point, 8> localPointList = {{

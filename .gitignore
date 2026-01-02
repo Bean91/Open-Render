@@ -2,3 +2,4 @@
 OpenRender
 .fleet
 website/node_modules
+*[^.]

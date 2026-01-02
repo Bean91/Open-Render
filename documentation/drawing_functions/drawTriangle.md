@@ -7,7 +7,7 @@ Object drawTriangle(const double x0, const double y0, const double z0,
 ## Basic Info
 Draws a line in absolute space
 ### Return Type
-returns an [`Object`](../structures/object.md)
+returns an [`Object`](../structures_and_types/object.md)
 
 ### Parameters
 | Parameter | Type                              | Use                     | Optional |
@@ -21,7 +21,7 @@ returns an [`Object`](../structures/object.md)
 | `x2`      | `double`                          | X Coordinate of point 3 | ❌        |
 | `y2`      | `double`                          | Y Coordinate of point 3 | ❌        |
 | `z2`      | `double`                          | Z Coordinate of point 3 | ❌        |
-| `rgba`    | [`Color`](../structures/color.md) | Color of triangle       | ❌        |
+| `rgba`    | [`Color`](../structures_and_types/color.md) | Color of triangle       | ❌        |
 ---
 ## Example
 

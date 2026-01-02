@@ -7,7 +7,7 @@ Object drawCircle(const double x, const double y, const double z, const double r
 ## Basic Info
 Draws a circle in absolute space
 ### Return Type
-returns an [`Object`](../structures/object.md)
+returns an [`Object`](../structures_and_types/object.md)
 
 ### Parameters
 | Parameter | Type                              | Use                    | Optional |
@@ -16,7 +16,7 @@ returns an [`Object`](../structures/object.md)
 | `y`       | `double`                          | Y Coordinate of center | ❌        |
 | `z`       | `double`                          | Z Coordinate of center | ❌        |
 | `r`       | `double`                          | Radius of circle       | ❌        |
-| `rgba`    | [`Color`](../structures/color.md) | Color of circle        | ❌        |
+| `rgba`    | [`Color`](../structures_and_types/color.md) | Color of circle        | ❌        |
 | `roll`    | `double`                          | Roll of circle         | ✅        |
 | `pitch`   | `double`                          | Pitch of circle        | ✅        |
 | `yaw`     | `double`                          | Yaw of circle          | ✅        |

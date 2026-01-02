@@ -7,7 +7,7 @@ Object drawLine(const double x0, const double y0, const double z0,
 ## Basic Info
 Draws a line in absolute space
 ### Return Type
-returns an [`Object`](../structures/object.md)
+returns an [`Object`](../structures_and_types/object.md)
 
 ### Parameters
 | Parameter | Type                              | Use                     | Optional |
@@ -18,7 +18,7 @@ returns an [`Object`](../structures/object.md)
 | `x1`      | `double`                          | X Coordinate of point 2 | ❌        |
 | `y1`      | `double`                          | Y Coordinate of point 2 | ❌        |
 | `z1`      | `double`                          | Z Coordinate of point 2 | ❌        |
-| `rgba`    | [`Color`](../structures/color.md) | Color of line           | ❌        |
+| `rgba`    | [`Color`](../structures_and_types/color.md) | Color of line           | ❌        |
 ---
 ## Example
 

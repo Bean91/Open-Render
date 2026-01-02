@@ -6,7 +6,7 @@ Object drawSphere(const double x, const double y, const double z, const double r
 ## Basic Info
 Draws a line in absolute space
 ### Return Type
-returns an [`Object`](../structures/object.md)
+returns an [`Object`](../structures_and_types/object.md)
 
 ### Parameters
 | Parameter | Type                              | Use                    | Optional |
@@ -15,7 +15,7 @@ returns an [`Object`](../structures/object.md)
 | `y`       | `double`                          | Y Coordinate of center | ❌        |
 | `z`       | `double`                          | Z Coordinate of center | ❌        |
 | `r`       | `double`                          | Radius of sphere       | ❌        |
-| `rgba`    | [`Color`](../structures/color.md) | Color of sphere        | ❌        |
+| `rgba`    | [`Color`](../structures_and_types/color.md) | Color of sphere        | ❌        |
 ---
 ## Example
 

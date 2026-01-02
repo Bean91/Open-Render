@@ -8,7 +8,7 @@ Object drawRecPrFill(const double x, const double y, const double z,
 ## Basic Info
 Draws a filled rectangular prizm in absolute space
 ### Return Type
-returns an [`Object`](../structures/object.md)
+returns an [`Object`](../structures_and_types/object.md)
 
 ### Parameters
 | Parameter | Type                              | Use                    | Optional |
@@ -19,7 +19,7 @@ returns an [`Object`](../structures/object.md)
 | `l`       | `double`                          | Length of prizm        | ❌        |
 | `w`       | `double`                          | Width of prizm         | ❌        |
 | `h`       | `double`                          | Height of prizm        | ❌        |
-| `rgba`    | [`Color`](../structures/color.md) | Color of prizm         | ❌        |
+| `rgba`    | [`Color`](../structures_and_types/color.md) | Color of prizm         | ❌        |
 | `roll`    | `double`                          | Roll of circle         | ✅        |
 | `pitch`   | `double`                          | Pitch of prizm         | ✅        |
 | `yaw`     | `double`                          | Yaw of prizm           | ✅        |
