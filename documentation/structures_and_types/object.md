@@ -1,5 +1,5 @@
 ```cpp
-struct Color {
+struct Object {
 	std::vector<Point> points;
 	Color rgba;
 	bool rendered;
