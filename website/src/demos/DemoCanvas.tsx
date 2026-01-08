@@ -135,7 +135,7 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 
 			try {
 				console.log("try");
-				const response = await fetch("http://localhost:8080/api/demo", {
+				const response = await fetch("http://127.0.0.1:8080/api/demo", {
 					"method": "POST",
 					"headers": {
 						"Content-Type": "application/json",
