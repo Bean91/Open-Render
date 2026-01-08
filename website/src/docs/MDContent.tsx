@@ -47,7 +47,7 @@ const MDContent: React.FC<docs> = ({sec, ite}) => {
 	const classes = "cursor-pointer p-1 rounded-sm"
 
 	useEffect(() => {
-		fetch("http://localhost:8080/docs/list", {
+		fetch("http://localhost:8080/api/docs/list", {
 			"method": "GET",
 		})
 		.then(response => response.json())
@@ -55,15 +55,15 @@ const MDContent: React.FC<docs> = ({sec, ite}) => {
 			setDocsList(data);
 		});
 		if (sec && !ite) {
-			fetch(`http://localhost:8080/docs/AIUsage`, {
+			fetch(`http://localhost:8080/api/docs/AIUsage`, {
 				"method": "GET"
 			}).then(response => response.text()).then(data => {setContent(data);});
 		} else if (!sec && !ite) {
-			fetch(`http://localhost:8080/docs/introduction`, {
+			fetch(`http://localhost:8080/api/docs/introduction`, {
 				"method": "GET"
 			}).then(response => response.text()).then(data => {setContent(data);});
 		} else if (sec && ite) {
- 			fetch(`http://localhost:8080/docs/${section}/${item}`, {
+ 			fetch(`http://localhost:8080/api/docs/${section}/${item}`, {
 				"method": "GET"
  			}).then(response => response.text()).then(data => {setContent(data);});
  		}

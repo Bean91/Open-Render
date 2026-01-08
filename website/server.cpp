@@ -17,14 +17,14 @@ int main() {
     size_t size = HEIGHT * WIDTH * 4;
 
     svr
-    .Options("/(.*)", [&](const httplib::Request&, httplib::Response& res) {
+    .Options("/api/(.*)", [&](const httplib::Request&, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_header("Access-Control-Max-Age", "86400");
         res.status = 204;
     })
-	.Post("/demo", [&](const httplib::Request& req, httplib::Response& res) {
+	.Post("/api/demo", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -96,7 +96,7 @@ int main() {
             res.set_content("Error: Failed to draw content", "text/plain");
         }
 	})
-    .Get("/docs/list", [&](const httplib::Request& req, httplib::Response& res) {
+    .Get("/api/docs/list", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
         res.set_header("Access-Control-Allow-Origin", "*");
@@ -123,7 +123,7 @@ int main() {
         }
         res.set_content(json_array.dump(), "application/json");
     })
-    .Get("/docs/(.*)", [&](const httplib::Request& req, httplib::Response& res) {
+    .Get("/api/docs/(.*)", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
         res.set_header("Access-Control-Allow-Origin", "*");
