@@ -53,12 +53,14 @@ int main() {
         const double roll = list.first.second.x;
         const double pitch = list.first.second.y;
         const double yaw = list.first.second.z;
+        std::cout << "parsed json" << std::endl;
 
         std::map<std::string, openrender::Object> objectList = {};
         try {
             objectList = {};
             openrender::clearCanvas();
             for (auto& [key, val] : list.second) {
+                std::cout << key << std::endl;
                 std::vector<openrender::Point> points = val.second.first;
                 if (val.first == "line") {
                     objectList.insert({key, openrender::drawLine(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second)});
@@ -74,6 +76,7 @@ int main() {
                     objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
                 }
             }
+            std::cout << "drew content" << std::endl;
         } catch(...) {
             res.status = 500;
             res.set_content("Error: Failed to draw content", "text/plain");
@@ -89,6 +92,7 @@ int main() {
             res.status = 500;
             res.set_content("Error: Failed to draw content", "text/plain");
         }
+        std::cout << "converted to bytes and projected to 2d" << std::endl;
         if (bytes && size > 0) {
             res.set_content(static_cast<const char*>(bytes), size, "application/octet-stream");
         } else {
