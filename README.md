@@ -24,4 +24,4 @@ For extended documentation, please view the [docs](docs/introduction.md)
 ## Important Notes
 This was made as a school semester project (v1 at least).
 
-If you would like to contribute, please look at [`CONTRIBUTING.md`]("CONTRIBUTING.md")
+If you would like to contribute, please look at [`CONTRIBUTING.md`](CONTRIBUTING.md)
