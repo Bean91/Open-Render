@@ -82,8 +82,13 @@ int main() {
             std::cout << key << std::endl;
         }
         std::cout << std::endl;
-        openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
-        bytes = openrender::convToBytes();
+        try {
+            openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
+            bytes = openrender::convToBytes();
+        } catch (...) {
+            res.status = 500;
+            res.set_content("Error: Failed to draw content", "text/plain");
+        }
         if (bytes && size > 0) {
             res.set_content(static_cast<const char*>(bytes), size, "application/octet-stream");
         } else {
