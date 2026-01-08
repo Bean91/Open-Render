@@ -6,7 +6,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ location }) => {
-	const items: string[] = ["Home", "Docs", "Demos"]
+	const items: string[] = ["Home", "Docs", "Demos", "GitHub"]
 	const itemClass: string = "p-2.5 h-12 m-2 cursor-pointer rounded-md text-white text-xl font-medium items-center hover:bg-[#5b6372]";
 
 	interface locations {
@@ -16,7 +16,8 @@ const Navbar: React.FC<NavbarProps> = ({ location }) => {
 	const locationList: locations = {
 		"Home": "/",
 		"Docs": "/docs",
-		"Demos": "/demos"
+		"Demos": "/demos",
+		"GitHub": "https://github.com/Bean91/Open-Render"
 	};
 
 	const changePlace = (item: string) => {
