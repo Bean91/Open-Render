@@ -165,10 +165,25 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 		})();
 	}, [requestData, roll, pitch, yaw, x, y, z]);
 
+	const downloadCanvas = () => {
+		const canvas = canvasRef.current;
+		if (!canvas) return;
+
+		const dataURL = canvas.toDataURL('image/png');
+
+		const downloadLink = document.createElement('a');
+		downloadLink.setAttribute('href', dataURL);
+		downloadLink.setAttribute('download', 'image.png');
+
+		document.body.appendChild(downloadLink);
+		downloadLink.click();
+		document.body.removeChild(downloadLink);
+	};
+
 	const width: number = 852;
 	const height: number = 480;
 
-	return <div className={"bg-gray-700 items-center rounded-md m-4 p-2"}><canvas width={width} height={height} ref={canvasRef} /></div>;
+	return <div className={"bg-gray-700 items-center rounded-md m-4 p-2"}><canvas width={width} height={height} ref={canvasRef} /><button className={"text-white rounded-sm bg-blue-600 p-2 py-1 m-1 cursor-pointer"} onClick={downloadCanvas}>Download Image</button></div>;
 }
 
 export default DemoCanvas;

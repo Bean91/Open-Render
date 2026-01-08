@@ -36,7 +36,7 @@ const components = {
 	},
 };
 
-const Sidebar: React.FC<docs> = ({sec, ite}) => {
+const MDContent: React.FC<docs> = ({sec, ite}) => {
 	const sidebar = useRef<HTMLDivElement | null>(null);
 	const { section, item } = useParams();
 	const [content, setContent] = useState<string>("");
@@ -127,4 +127,4 @@ const Sidebar: React.FC<docs> = ({sec, ite}) => {
 	)
 }
 
-export default Sidebar;
+export default MDContent;

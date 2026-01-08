@@ -1,7 +1,7 @@
 import Navbar from './Navbar.tsx';
 import { Outlet } from "react-router";
 import { useTitle } from "./hooks/useTitle.ts";
-import Sidebar from "./docs/MDContent.tsx";
+import MDContent from "./docs/MDContent.tsx";
 import React from "react";
 import './style.css';
 
@@ -16,7 +16,7 @@ const Docs: React.FC<docs> = ({section, item}) => {
   return (
     <div>
       <Navbar location={"Docs"} />
-      <Sidebar sec={section} ite={item} />
+      <MDContent sec={section} ite={item} />
       <Outlet />
     </div>
   )
