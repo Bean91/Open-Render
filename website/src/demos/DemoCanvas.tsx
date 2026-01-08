@@ -23,7 +23,8 @@ const DemoCanvas: React.FC<{requestData: request[], roll: number, pitch: number,
 
 	useEffect(() => {
 		(async () => {
-			const j = {
+			//@ts-ignore
+			const j: any = {
 				"transformations": {
 					"roll": roll,
 					"pitch": pitch,
