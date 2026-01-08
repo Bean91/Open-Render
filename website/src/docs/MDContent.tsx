@@ -10,29 +10,30 @@ import '../style.css';
 interface docs {
 	sec: boolean,
 	ite: boolean
-};
+}
 
 const components = {
-  code({ node, inline, className, children, ...props }) {
-    const match = /language-(\w+)/.exec(className || '');
-    if (!inline && match) {
-      return (
-        <SyntaxHighlighter
-          style={oneDark}
-          language={match[1]}
-          PreTag="div"
-          {...props}
-        >
-          {String(children).replace(/\n$/, '')}
-        </SyntaxHighlighter>
-      );
-    }
-    return (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    );
-  },
+	// @ts-expect-error ignore
+	code({ node, inline, className, children, ...props }) {
+		const match = /language-(\w+)/.exec(className || '');
+		if (!inline && match) {
+			return (
+				<SyntaxHighlighter
+					style={oneDark}
+					language={match[1]}
+					PreTag="div"
+					{...props}
+					>
+					{String(children).replace(/\n$/, '')}
+				</SyntaxHighlighter>
+			);
+		}
+		return (
+			<code className={className} {...props}>
+				{children}
+			</code>
+		);
+	},
 };
 
 const Sidebar: React.FC<docs> = ({sec, ite}) => {
@@ -40,10 +41,12 @@ const Sidebar: React.FC<docs> = ({sec, ite}) => {
 	const { section, item } = useParams();
 	const [content, setContent] = useState<string>("");
 	const [docsList, setDocsList] = useState<string[]>([""]);
+	const [sectionsList, setSectionsList] = useState<string[]>([""]);
+	const [itemsList, setItemsList] = useState<string[][]>([[""]]);
+
+	const classes = "cursor-pointer p-1 rounded-sm"
 
 	useEffect(() => {
-		console.log(section);
-		console.log(item);
 		fetch("http://localhost:8080/docs/list", {
 			"method": "GET",
 		})
@@ -52,18 +55,16 @@ const Sidebar: React.FC<docs> = ({sec, ite}) => {
 			setDocsList(data);
 		});
 		if (sec && !ite) {
-			console.log("ai");
 			fetch(`http://localhost:8080/docs/AIUsage`, {
-			    "method": "GET"
+				"method": "GET"
 			}).then(response => response.text()).then(data => {setContent(data);});
 		} else if (!sec && !ite) {
-			console.log("root");
 			fetch(`http://localhost:8080/docs/introduction`, {
-			    "method": "GET"
+				"method": "GET"
 			}).then(response => response.text()).then(data => {setContent(data);});
 		} else if (sec && ite) {
  			fetch(`http://localhost:8080/docs/${section}/${item}`, {
- 			    "method": "GET"
+				"method": "GET"
  			}).then(response => response.text()).then(data => {setContent(data);});
  		}
 	}, [section, item, sec, ite]);
@@ -73,8 +74,7 @@ const Sidebar: React.FC<docs> = ({sec, ite}) => {
 	}, [content])
 
 	useEffect(() => {
-		const classes = "cursor-pointer p-1 rounded-sm"
-		if(sidebar.current) {
+		if (sidebar.current) {
 			if (!sec && !ite) {
 				sidebar.current.innerHTML = `<p class="${classes} bg-gray-700"><a>Introduction</a></p><p class="${classes}"><a href="/docs/aiusage">AI Usage</a></p>`;
 			} else if (sec && !ite) {
@@ -82,16 +82,44 @@ const Sidebar: React.FC<docs> = ({sec, ite}) => {
 			} else {
 				sidebar.current.innerHTML = `<p class="${classes}"><a href="/docs">Introduction</a></p><p class="${classes}"><a href="/docs/aiusage">AI Usage</a></p>`;
 			}
-
+			if (docsList[1]) {
+				setSectionsList(JSON.parse(docsList[0]));
+				setItemsList(JSON.parse(docsList[1]));
+			}
 		}
-	}, [docsList, section, item, sec, ite, sidebar])
+	}, [docsList, section, item, sec, ite, sidebar, classes])
+
+	useEffect(() => {
+		if (sidebar.current) {
+			for (let i = 0; i < sectionsList.length; i++) {
+				if (sectionsList[i] === section) {
+					sidebar.current.innerHTML += `<div id="${sectionsList[i]}"><h4 class="p-1 rounded-sm bg-gray-700">${sectionsList[i]}</h4>`;
+					for (let j = 0; j < itemsList[i].length; j++) {
+						if (itemsList[i][j] === item) {
+							sidebar.current.innerHTML += `<p class="${classes} text-sm ml-4 bg-gray-700"><a href="/docs/${sectionsList[i]}/${itemsList[i][j]}">${itemsList[i][j]}</a></p>`;
+						} else {
+							sidebar.current.innerHTML += `<p class="${classes} text-sm ml-4"><a href="/docs/${sectionsList[i]}/${itemsList[i][j]}">	${itemsList[i][j]}</a></p>`;
+						}
+					}
+					sidebar.current.innerHTML += `</div>`;
+				} else {
+					sidebar.current.innerHTML += `<div id="${sectionsList[i]}"><h4 class="${classes}">${sectionsList[i]}</h4>`;
+					for (let j = 0; j < itemsList[i].length; j++) {
+						sidebar.current.innerHTML += `<p class="${classes} text-sm ml-4"><a href="/docs/${sectionsList[i]}/${itemsList[i][j]}">	${itemsList[i][j]}</a></p>`;
+					}
+					sidebar.current.innerHTML += `</div>`;
+				}
+			}
+		}
+	}, [sectionsList, itemsList, sidebar, classes, section, item])
 
 	return (
 		<div className={"mt-16 grid grid-cols-5"}>
-			<div ref={sidebar} className={"col-span-1 p-2 m-1 mr-0 bg-gray-600 text-white rounded-md"}></div>
+			<div ref={sidebar} className={"col-span-1 p-2 m-1 mr-0 bg-gray-600 text-white rounded-md h-fit"}></div>
 			<article className={"markdown-body p-4 col-span-4 rounded-md"} style={{margin: "calc(var(--spacing))"}}>
 				<Markdown
 					remarkPlugins={[remarkGfm]}
+					//@ts-expect-error ignore
 					components={components}
 				>{content}</Markdown>
 			</article>
