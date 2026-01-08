@@ -2,6 +2,7 @@
 #include "../open_render.hpp"
 #include "../../../json/single_include/nlohmann/json.hpp"
 #include <string.h>
+#include <fstream>
 using json = nlohmann::json;
 
 typedef std::pair<std::pair<openrender::Point, openrender::Point>,
@@ -23,11 +24,12 @@ int main() {
         res.set_header("Access-Control-Max-Age", "86400");
         res.status = 204;
     })
-	.Post("/demo", [&](const auto& req, auto& res) {
+	.Post("/demo", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_header("Access-Control-Max-Age", "86400");
+
 		auto request_data = json::parse(req.body);
 
         request list;
@@ -67,7 +69,7 @@ int main() {
                 } else if (val.first == "recPrFill") {
                     objectList.insert({key, openrender::drawRecPrFill(points[0].x, points[0].y, points[0].z, points[1].x, points[1].y, points[1].z, val.second.second, points[2].x, points[2].y, points[2].z)});
                 } else if (val.first == "circle") {
-                    objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
+                    objectList.insert({key, openrender::drawCircle(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second, points[2].x, points[2].y, points[2].z)});
                 } else if (val.first == "sphere") {
                     objectList.insert({key, openrender::drawSphere(points[0].x, points[0].y, points[0].z, points[1].x, val.second.second)});
                 }
@@ -80,11 +82,8 @@ int main() {
             std::cout << key << std::endl;
         }
         std::cout << std::endl;
-
         openrender::projToFlat(x, y, z, &objectList, roll, pitch, yaw);
-
         bytes = openrender::convToBytes();
-
         if (bytes && size > 0) {
             res.set_content(static_cast<const char*>(bytes), size, "application/octet-stream");
         } else {
@@ -92,5 +91,55 @@ int main() {
             res.set_content("Error: Failed to draw content", "text/plain");
         }
 	})
+    .Get("/docs/list", [&](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Max-Age", "86400");
+        std::cout << "/docs/list" << std::endl;
+        std::ifstream docslist("docslist.txt");
+        if (!docslist.is_open()) {
+            res.set_content("Error: File didn't open", "text/plain");
+            res.status = 500;
+        }
+
+        std::string line;
+        std::vector<std::string> lines;
+
+        while (std::getline(docslist, line)) {
+            lines.push_back(line);
+        }
+
+        docslist.close();
+
+        json json_array = json::array();
+        for (const std::string& item : lines) {
+            json_array.push_back(item);
+        }
+        res.set_content(json_array.dump(), "application/json");
+    })
+    .Get("/docs/(.*)", [&](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Accept");
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Max-Age", "86400");
+        std::string item = req.matches[1];
+
+        std::ifstream file("../docs/"+item+".md");
+
+        if (!file.is_open()) {
+            res.status = 500;
+            res.set_content("Error: Couldn't open file", "text/plain");
+        }
+
+        std::string line;
+        std::string lines;
+
+        while (std::getline(file, line)) {
+            lines += "\n" + line;
+        }
+
+        res.set_content(lines, "text/plain");
+    })
 	.listen("0.0.0.0", 8080);
 }

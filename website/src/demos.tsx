@@ -1,12 +1,15 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
 import './style.css';
 import Navbar from './Navbar.tsx';
 import DemoControls from './demos/DemoControls.tsx';
+import { useTitle } from "./hooks/useTitle.ts";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Navbar location={"Demos"} />
-    <DemoControls />
-  </StrictMode>,
-);
+export default function Demos() {
+  useTitle("Demos | Open Render");
+
+  return (
+      <div>
+        <Navbar location={"Demos"} />
+        <DemoControls />
+      </div>
+    )
+}
