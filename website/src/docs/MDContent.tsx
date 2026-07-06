@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import { useParams } from "react-router";
 import Markdown from 'react-markdown';
-import 'github-markdown-css/github-markdown.css';
+import 'github-markdown-css/github-markdown-dark.css';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
