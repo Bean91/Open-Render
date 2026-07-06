@@ -1,5 +1,5 @@
 import Navbar from "./Navbar.tsx";
-import 'github-markdown-css/github-markdown.css';
+import 'github-markdown-css/github-markdown-dark.css';
 import example from './assets/example4.png';
 
 function Home() {
